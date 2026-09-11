@@ -1,0 +1,86 @@
+name: Add New Client (Webhook Receiver)
+
+# Triggered via GitHub's repository_dispatch API — Lovable's form submission
+# calls this using a GitHub Personal Access Token, sending the new client's
+# settings as the event payload. This workflow receives that payload and
+# writes it into clients_registry.json automatically.
+on:
+  repository_dispatch:
+    types: [new_client_signup]
+
+permissions:
+  contents: write
+
+jobs:
+  add-client:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Add new client to registry
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import os
+
+          # The payload sent by Lovable's webhook call is available here,
+          # passed through as an environment variable by the next step.
+          payload_raw = os.environ.get("CLIENT_PAYLOAD", "{}")
+          payload = json.loads(payload_raw)
+
+          # Expecting payload shaped like:
+          # {
+          #   "client_id": "client_003",
+          #   "name": "...", "email": "...", "cities": [...],
+          #   "categories": [...], "daily_lead_cap": 20,
+          #   "min_reviews": 40, "active": true
+          # }
+          client_id = payload.get("client_id")
+          if not client_id:
+              print("ERROR: payload missing 'client_id' — cannot add to registry.")
+              exit(1)
+
+          registry_file = "clients_registry.json"
+          if os.path.exists(registry_file):
+              with open(registry_file, "r", encoding="utf-8") as f:
+                  try:
+                      registry = json.load(f)
+                  except json.JSONDecodeError:
+                      registry = {}
+          else:
+              registry = {}
+
+          # Build the client's settings from the payload, with safe
+          # defaults for anything missing — never crash on an incomplete
+          # submission, just fill in something sensible instead.
+          registry[client_id] = {
+              "name": payload.get("name", client_id),
+              "email": payload.get("email", ""),
+              "cities": payload.get("cities", []),
+              "categories": payload.get("categories", []),
+              "daily_lead_cap": payload.get("daily_lead_cap", 20),
+              "min_reviews": payload.get("min_reviews", 40),
+              "active": payload.get("active", True),
+          }
+
+          with open(registry_file, "w", encoding="utf-8") as f:
+              json.dump(registry, f, ensure_ascii=False, indent=2)
+
+          print(f"Added/updated client '{client_id}' in registry.")
+          PYEOF
+        env:
+          CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+
+      - name: Commit updated registry
+        run: |
+          git config user.name "signup-bot"
+          git config user.email "actions@github.com"
+          git add clients_registry.json
+          git diff --cached --quiet || git commit -m "Add new client via signup webhook [skip ci]"
+          git push
