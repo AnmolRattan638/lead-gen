@@ -1,0 +1,20 @@
+{
+  "client_001": {
+    "name": "Priya's Freelance Leads",
+    "email": "priya@example.com",
+    "cities": ["Jaipur", "Udaipur", "Jodhpur"],
+    "categories": ["salons", "clinics", "gyms"],
+    "daily_lead_cap": 20,
+    "min_reviews": 40,
+    "active": true
+  },
+  "client_002": {
+    "name": "Rahul's Lead Finder",
+    "email": "rahul@example.com",
+    "cities": ["Pune", "Nashik"],
+    "categories": ["restaurants", "cafes"],
+    "daily_lead_cap": 15,
+    "min_reviews": 30,
+    "active": true
+  }
+}
