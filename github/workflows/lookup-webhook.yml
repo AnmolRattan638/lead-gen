@@ -1,0 +1,104 @@
+name: Client Settings Lookup (Webhook Receiver)
+
+# Triggered via repository_dispatch, same pattern as the signup webhook.
+# The Lookup page sends a client_id; this workflow finds that client's
+# current settings in the registry and EMAILS them back — it never
+# returns data directly to the browser, since that would require exposing
+# a way to read the private repo's contents client-side (the security
+# issue we specifically avoided).
+on:
+  repository_dispatch:
+    types: [client_lookup_request]
+
+permissions:
+  contents: read
+
+jobs:
+  lookup-and-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Look up client and send email
+        env:
+          CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+          BREVO_USERNAME: ${{ secrets.BREVO_USERNAME }}
+          BREVO_PASSWORD: ${{ secrets.BREVO_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import os
+          import smtplib
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
+
+          payload_raw = os.environ.get("CLIENT_PAYLOAD", "{}")
+          payload = json.loads(payload_raw)
+          client_id = payload.get("client_id", "").strip()
+
+          registry_file = "clients_registry.json"
+          if not os.path.exists(registry_file):
+              print("ERROR: registry file not found.")
+              exit(1)
+
+          with open(registry_file, "r", encoding="utf-8") as f:
+              registry = json.load(f)
+
+          client = registry.get(client_id)
+
+          BREVO_HOST = "smtp-relay.brevo.com"
+          BREVO_PORT = 587
+          BREVO_USERNAME = os.environ.get("BREVO_USERNAME")
+          BREVO_PASSWORD = os.environ.get("BREVO_PASSWORD")
+          FROM_EMAIL = os.environ.get("FROM_EMAIL")
+
+          if not client:
+              # Client ID not found — we still can't tell the BROWSER this
+              # directly (no safe channel back), so this just logs it here.
+              # The person requesting the lookup will simply get no email,
+              # which is a safe (if slightly unclear) failure mode — it
+              # avoids confirming/denying which client IDs exist to anyone
+              # probing the lookup form.
+              print(f"Client ID '{client_id}' not found in registry — no email sent.")
+              exit(0)
+
+          client_email = client.get("email")
+          if not client_email:
+              print(f"Client '{client_id}' has no email on file — cannot send lookup result.")
+              exit(0)
+
+          body = f"""Here are your current lead search settings:
+
+Business Name: {client.get('name', '')}
+Cities: {', '.join(client.get('cities', []))}
+Categories: {', '.join(client.get('categories', []))}
+Daily Lead Cap: {client.get('daily_lead_cap', '')}
+Minimum Reviews Filter: {client.get('min_reviews', '')}
+Status: {'Active' if client.get('active', True) else 'Paused'}
+
+To change any of these, visit the Configure page again using this same Client ID: {client_id}
+"""
+
+          msg = MIMEMultipart()
+          msg["From"] = FROM_EMAIL
+          msg["To"] = client_email
+          msg["Subject"] = f"Your Lead Search Settings ({client_id})"
+          msg.attach(MIMEText(body, "plain"))
+
+          with smtplib.SMTP(BREVO_HOST, BREVO_PORT) as server:
+              server.starttls()
+              server.login(BREVO_USERNAME, BREVO_PASSWORD)
+              server.send_message(msg)
+
+          print(f"Lookup email sent to {client_email} for client '{client_id}'.")
+          PYEOF
