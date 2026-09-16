@@ -59,17 +59,32 @@ Respond with ONLY a comma-separated list of business categories, nothing else â€
   try {
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
-    const response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-      }),
-    });
+    console.log("Calling Gemini API for role:", role);
+
+    // Hard timeout so a hung request fails fast instead of silently
+    // eating Netlify's 30s function limit with no visibility.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    let response;
+    try {
+      response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    console.log("Gemini responded with status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
+      console.error("Gemini API error body:", errorText);
       return {
         statusCode: 502,
         body: JSON.stringify({ error: "AI suggestion service unavailable" }),
@@ -77,6 +92,8 @@ Respond with ONLY a comma-separated list of business categories, nothing else â€
     }
 
     const data = await response.json();
+    console.log("Gemini raw response:", JSON.stringify(data));
+
     const suggestionText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
     // Parse the comma-separated response into a clean array, trimming
@@ -91,7 +108,14 @@ Respond with ONLY a comma-separated list of business categories, nothing else â€
       body: JSON.stringify({ categories }),
     };
   } catch (err) {
-    console.error("Function error:", err);
+    if (err.name === "AbortError") {
+      console.error("Gemini API call timed out after 8s");
+      return {
+        statusCode: 504,
+        body: JSON.stringify({ error: "AI service timed out" }),
+      };
+    }
+    console.error("Function error:", err.name, err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Something went wrong generating suggestions" }),
