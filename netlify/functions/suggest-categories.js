@@ -4,15 +4,12 @@
 // Lives at: netlify/functions/suggest-categories.js
 // Called by the signup form's JavaScript via fetch("/.netlify/functions/suggest-categories")
 //
-// This keeps the Gemini API key safe on the server side — it never
-// appears in the browser's page source, unlike the GitHub token (which
-// is a deliberate, accepted tradeoff for that specific piece, scoped
-// tightly to one repo). Gemini's free tier has real usage limits, so
-// keeping this key hidden protects it from being drained by anyone
-// viewing the page source.
+// Switched from Gemini to Groq — Gemini's API was hanging/timing out
+// on every server-side call regardless of key or network path. Groq
+// uses an OpenAI-compatible endpoint, free tier, no billing required.
 //
 // SETUP REQUIRED (in Netlify dashboard, not in this file):
-//   Site Settings → Environment variables → add GEMINI_API_KEY
+//   Site Settings → Environment variables → add GROQ_API_KEY
 // ============================================================
 
 exports.handler = async function (event) {
@@ -42,8 +39,8 @@ exports.handler = async function (event) {
     };
   }
 
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_API_KEY) {
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Server not configured — missing API key" }),
@@ -57,22 +54,25 @@ Suggest 5-8 specific types of LOCAL BUSINESSES this freelancer should search for
 Respond with ONLY a comma-separated list of business categories, nothing else — no explanation, no numbering, no extra text. Example format: wedding venues, bridal boutiques, event planners, photography studios`;
 
   try {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const groqUrl = "https://api.groq.com/openai/v1/chat/completions";
 
-    console.log("Calling Gemini API for role:", role);
+    console.log("Calling Groq API for role:", role);
 
-    // Hard timeout so a hung request fails fast instead of silently
-    // eating Netlify's 30s function limit with no visibility.
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     let response;
     try {
-      response = await fetch(geminiUrl, {
+      response = await fetch(groqUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
+          model: "llama-3.1-8b-instant",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
         }),
         signal: controller.signal,
       });
@@ -80,11 +80,11 @@ Respond with ONLY a comma-separated list of business categories, nothing else �
       clearTimeout(timeoutId);
     }
 
-    console.log("Gemini responded with status:", response.status);
+    console.log("Groq responded with status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error body:", errorText);
+      console.error("Groq API error body:", errorText);
       return {
         statusCode: 502,
         body: JSON.stringify({ error: "AI suggestion service unavailable" }),
@@ -92,9 +92,9 @@ Respond with ONLY a comma-separated list of business categories, nothing else �
     }
 
     const data = await response.json();
-    console.log("Gemini raw response:", JSON.stringify(data));
+    console.log("Groq raw response:", JSON.stringify(data));
 
-    const suggestionText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    const suggestionText = data.choices?.[0]?.message?.content?.trim() || "";
 
     // Parse the comma-separated response into a clean array, trimming
     // whitespace and dropping any empty entries from stray formatting.
@@ -109,7 +109,7 @@ Respond with ONLY a comma-separated list of business categories, nothing else �
     };
   } catch (err) {
     if (err.name === "AbortError") {
-      console.error("Gemini API call timed out after 8s");
+      console.error("Groq API call timed out after 8s");
       return {
         statusCode: 504,
         body: JSON.stringify({ error: "AI service timed out" }),
