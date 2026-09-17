@@ -11,5 +11,17 @@
       "Washington"
     ],
     "timestamp": "2026-09-17T09:59:41.861Z"
+  },
+  {
+    "event": "entry",
+    "client_id": "client_6801",
+    "name": "Soul",
+    "email": "meaningless1727@gmail.com",
+    "cities": [
+      "hyderabad",
+      "Telangana",
+      "India"
+    ],
+    "timestamp": "2026-09-17T12:31:02.101Z"
   }
 ]
