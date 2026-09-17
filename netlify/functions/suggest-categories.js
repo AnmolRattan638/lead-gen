@@ -70,7 +70,7 @@ Respond with ONLY a comma-separated list of business categories, nothing else â€
           "Authorization": `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: "openai/gpt-oss-20b",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
         }),
