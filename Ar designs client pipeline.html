@@ -1,0 +1,189 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Client Pipeline Monitor | AR Designs</title><meta name="description" content="Client signup and removal analytics for AR Designs"><style>
+:root{--bg:#0a0a0f;--panel:rgba(18,24,36,.78);--line:rgba(91,145,210,.2);--text:#f1f5fb;--muted:#919aaa;--blue:#20baf8;--teal:#18d7c0;--green:#32db86;--red:#ff5d65}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 42%,rgba(0,154,220,.09),transparent 33%),var(--bg);color:var(--text);font:14px Arial,sans-serif;min-width:320px}.wrap{max-width:1480px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:end;gap:20px;border-bottom:1px solid var(--line);padding-bottom:20px}.brand{font-size:11px;letter-spacing:.2em;color:var(--teal);font-weight:700}.brand:before{content:'•';margin-right:8px}.top h1{margin:8px 0 0;font-size:28px}.status{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:12px}.badge{color:var(--green);background:rgba(50,219,134,.1);border:1px solid rgba(50,219,134,.2);border-radius:999px;padding:9px 13px;font-weight:700}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}.card,.panel,.row{background:linear-gradient(145deg,rgba(24,31,46,.88),rgba(14,18,28,.7));border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px rgba(255,255,255,.05);backdrop-filter:blur(20px);border-radius:8px}.card{padding:22px;min-height:175px;transition:.25s}.card:hover,.row:hover{transform:translateY(-4px) perspective(900px) rotateX(1deg);border-color:rgba(32,186,248,.4)}.icon{width:40px;height:40px;border-radius:6px;display:grid;place-items:center;font-size:20px}.blue{color:var(--blue);background:rgba(32,186,248,.11)}.teal{color:var(--teal);background:rgba(24,215,192,.11)}.red{color:var(--red);background:rgba(255,93,101,.11)}.live{float:right;color:var(--muted);font:10px monospace;letter-spacing:.2em}.label,.eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:700;color:var(--muted)}.card .label{margin-top:28px}.num{font-size:40px;font-weight:700;margin-top:6px}.note{float:right;margin-top:-25px;color:var(--muted);font-size:12px}.grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px;margin-top:16px}.panel{padding:22px;min-height:440px}.eyebrow{color:var(--blue)}h2{margin:6px 0 18px;font-size:20px}.chartbox{height:320px;position:relative}.chartbox:before{content:'';position:absolute;inset:20%;background:rgba(0,184,255,.18);filter:blur(55px);border-radius:50%;animation:pulse 5s infinite}svg{width:100%;height:100%;position:relative}.axis{stroke:rgba(120,160,210,.14);stroke-width:1}.signup{fill:none;stroke:var(--blue);stroke-width:3}.remove{fill:none;stroke:var(--red);stroke-width:2}.area{fill:url(#glow)}.donut{width:190px;height:190px;margin:22px auto;border-radius:50%;background:conic-gradient(#3a4356 0 100%);position:relative;animation:spin 24s linear infinite;box-shadow:0 0 30px rgba(32,186,248,.12)}.donut:after{content:'';position:absolute;inset:27px;background:#111722;border-radius:50%;border:3px solid var(--bg)}.donut-center{position:absolute;left:50%;top:177px;transform:translate(-50%,-50%);z-index:2;text-align:center;font-size:30px;font-weight:700}.donut-center small{display:block;font-size:9px;color:var(--muted);letter-spacing:.15em}.city{display:flex;justify-content:space-between;padding:6px 0;color:var(--muted)}.activity{margin-top:18px}.feed{max-height:500px;overflow:auto}.row{display:grid;grid-template-columns:130px minmax(180px,1.4fr) 1fr 1fr;align-items:center;gap:16px;padding:15px;margin-bottom:8px;transition:.22s}.event{width:max-content;border-radius:99px;padding:6px 9px;font-size:10px;font-weight:700;letter-spacing:.12em}.entry{color:var(--green);background:rgba(50,219,134,.1)}.exit{color:var(--red);background:rgba(255,93,101,.1)}.name{font-weight:700}.sub,.cityname,.time{font-size:11px;color:var(--muted);margin-top:3px}.time{text-align:right}.empty-note{color:var(--muted);padding:20px;text-align:center;font-size:12px}@keyframes pulse{50%{opacity:.5;transform:scale(1.08)}}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:800px){.wrap{padding:16px}.top{align-items:start;flex-direction:column}.stats,.grid{grid-template-columns:1fr}.status{flex-wrap:wrap}.row{grid-template-columns:1fr 1fr}.time{text-align:left}.panel{min-height:400px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><main class="wrap">
+
+<header class="top">
+  <div><div class="brand">AR DESIGNS</div><h1>Client Pipeline Monitor</h1></div>
+  <div class="status">
+    <span class="badge" id="liveBadge">◉ — clients live</span>
+    <span id="updatedAt">Loading…</span>
+  </div>
+</header>
+
+<section class="stats">
+  <article class="card">
+    <span class="live">LIVE DATA</span>
+    <div class="icon blue">♙</div>
+    <div class="label">Total Active Clients</div>
+    <div class="num" id="statActive" data-count="0">0</div>
+    <span class="note">Current roster</span>
+  </article>
+  <article class="card">
+    <span class="live">LIVE DATA</span>
+    <div class="icon teal">↗</div>
+    <div class="label">New Signups</div>
+    <div class="num" id="statNewSignups" data-count="0">0</div>
+    <span class="note">This week</span>
+  </article>
+  <article class="card">
+    <span class="live">LIVE DATA</span>
+    <div class="icon red">↘</div>
+    <div class="label">Total Removed</div>
+    <div class="num" id="statRemoved" data-count="0">0</div>
+    <span class="note">All time</span>
+  </article>
+</section>
+
+<section class="grid">
+  <div class="panel">
+    <div class="eyebrow">30-day velocity</div>
+    <h2>Pipeline movement</h2>
+    <div class="chartbox">
+      <svg viewBox="0 0 800 300" preserveAspectRatio="none">
+        <defs><linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20baf8" stop-opacity=".45"/><stop offset="1" stop-color="#20baf8" stop-opacity="0"/></linearGradient></defs>
+        <path class="axis" d="M20 50H790M20 120H790M20 190H790M20 260H790"/>
+        <path class="area" id="areaPath" d=""/>
+        <path class="signup" id="signupPath" d=""/>
+        <path class="remove" id="removePath" d=""/>
+      </svg>
+    </div>
+  </div>
+  <aside class="panel" style="position:relative">
+    <div class="eyebrow" style="color:var(--teal)">Geographic mix</div>
+    <h2>Active by city</h2>
+    <div class="donut" id="donutChart"></div>
+    <div class="donut-center" id="donutCenter">—<small>ACTIVE</small></div>
+    <div id="cityLegend"></div>
+  </aside>
+</section>
+
+<section class="activity">
+  <div class="eyebrow">Live log</div>
+  <h2>Recent activity</h2>
+  <div class="feed" id="activityFeed">
+    <div class="empty-note">Loading activity…</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const DONUT_COLORS = ['#18d7c0', '#20baf8', '#32db86', '#ff5d65', '#c9a8ff', '#97a0ad'];
+
+function animateCount(el, target) {
+  const start = performance.now();
+  function tick(t) {
+    const p = Math.min((t - start) / 900, 1);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function formatTimestamp(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function buildChartPaths(chartData) {
+  // chartData: 30 entries, oldest first, each {date, entries, exits}
+  const maxVal = Math.max(1, ...chartData.map(d => Math.max(d.entries, d.exits)));
+  const left = 20, right = 790, top = 60, bottom = 260;
+  const stepX = (right - left) / (chartData.length - 1 || 1);
+
+  function yFor(val) {
+    return bottom - (val / maxVal) * (bottom - top);
+  }
+
+  const signupPts = chartData.map((d, i) => `${left + i * stepX} ${yFor(d.entries)}`);
+  const removePts = chartData.map((d, i) => `${left + i * stepX} ${yFor(d.exits)}`);
+
+  const signupPath = 'M' + signupPts.join(' L');
+  const removePath = 'M' + removePts.join(' L');
+  const areaPath = `M${left} ${bottom} L${signupPts.join(' L')} L${right} ${bottom} Z`;
+
+  return { signupPath, removePath, areaPath };
+}
+
+function buildDonut(cityBreakdown, activeClients) {
+  const donutEl = document.getElementById('donutChart');
+  const legendEl = document.getElementById('cityLegend');
+  const centerEl = document.getElementById('donutCenter');
+
+  centerEl.innerHTML = `${activeClients}<small>ACTIVE</small>`;
+
+  if (!cityBreakdown.length) {
+    donutEl.style.background = 'conic-gradient(#3a4356 0 100%)';
+    legendEl.innerHTML = '<div class="empty-note">No active clients yet</div>';
+    return;
+  }
+
+  const total = cityBreakdown.reduce((sum, c) => sum + c.count, 0);
+  let acc = 0;
+  const stops = cityBreakdown.map((c, i) => {
+    const startPct = (acc / total) * 100;
+    acc += c.count;
+    const endPct = (acc / total) * 100;
+    return `${DONUT_COLORS[i % DONUT_COLORS.length]} ${startPct}% ${endPct}%`;
+  });
+  donutEl.style.background = `conic-gradient(${stops.join(', ')})`;
+
+  legendEl.innerHTML = cityBreakdown.map((c, i) => `
+    <div class="city">
+      <span style="color:${DONUT_COLORS[i % DONUT_COLORS.length]}">● ${c.city}</span>
+      <b>${c.count}</b>
+    </div>
+  `).join('');
+}
+
+function buildActivityFeed(activity) {
+  const feedEl = document.getElementById('activityFeed');
+  if (!activity.length) {
+    feedEl.innerHTML = '<div class="empty-note">No activity logged yet</div>';
+    return;
+  }
+  feedEl.innerHTML = activity.map(a => `
+    <article class="row">
+      <span class="event ${a.event === 'entry' ? 'entry' : 'exit'}">● ${a.event === 'entry' ? 'ENTRY' : 'EXIT'}</span>
+      <div>
+        <div class="name">${a.name}</div>
+        <div class="sub">${a.client_id}</div>
+      </div>
+      <div class="cityname">▣ ${a.city}</div>
+      <time class="time">⌁ ${formatTimestamp(a.timestamp)}</time>
+    </article>
+  `).join('');
+}
+
+async function loadDashboard() {
+  try {
+    const res = await fetch('/.netlify/functions/get-dashboard-data');
+    if (!res.ok) throw new Error('Dashboard data request failed: ' + res.status);
+    const data = await res.json();
+
+    document.getElementById('liveBadge').textContent = `◉ ${data.activeClients} clients live`;
+    document.getElementById('updatedAt').textContent = 'Updated ' + formatTimestamp(data.updatedAt);
+
+    animateCount(document.getElementById('statActive'), data.activeClients);
+    animateCount(document.getElementById('statNewSignups'), data.newSignupsThisWeek);
+    animateCount(document.getElementById('statRemoved'), data.totalRemoved);
+
+    const { signupPath, removePath, areaPath } = buildChartPaths(data.chartData);
+    document.getElementById('signupPath').setAttribute('d', signupPath);
+    document.getElementById('removePath').setAttribute('d', removePath);
+    document.getElementById('areaPath').setAttribute('d', areaPath);
+
+    buildDonut(data.cityBreakdown, data.activeClients);
+    buildActivityFeed(data.activity);
+  } catch (err) {
+    console.error('Failed to load dashboard data:', err);
+    document.getElementById('liveBadge').textContent = '◉ Error loading data';
+    document.getElementById('activityFeed').innerHTML = '<div class="empty-note">Failed to load — check console for details.</div>';
+  }
+}
+
+loadDashboard();
+</script>
+</body></html>
