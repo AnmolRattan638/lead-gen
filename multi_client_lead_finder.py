@@ -23,6 +23,7 @@ import re
 import json
 import sys
 import smtplib
+from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
@@ -94,8 +95,40 @@ def get_client_output_file(client_id):
     return f"client_data/{client_id}/leads.xlsx"
 
 
+def get_client_daily_usage_file(client_id):
+    return f"client_data/{client_id}/daily_usage.json"
+
+
 def ensure_client_folder_exists(client_id):
     os.makedirs(f"client_data/{client_id}", exist_ok=True)
+
+
+# ─── DAILY CAP TRACKING (persists ACROSS runs, not just within one run) ───
+# Without this, daily_lead_cap only limits a single run — triggering the
+# script multiple times in one day would let a client rack up multiples
+# of their cap, burning through the shared API key's quota/budget.
+def load_daily_usage(client_id):
+    """Returns leads already used today for this client (0 if a new day
+    or no record yet)."""
+    filename = get_client_daily_usage_file(client_id)
+    today = str(date.today())
+    if not os.path.exists(filename):
+        return 0
+    with open(filename, "r", encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            return 0
+    if data.get("date") != today:
+        return 0  # new day — usage resets
+    return data.get("leads_used", 0)
+
+
+def save_daily_usage(client_id, leads_used_today):
+    ensure_client_folder_exists(client_id)
+    filename = get_client_daily_usage_file(client_id)
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump({"date": str(date.today()), "leads_used": leads_used_today}, f)
 
 
 # ─── PRICE LEVEL MAPPING (shared logic, not client-specific) ───
@@ -205,6 +238,16 @@ def find_leads_for_client(client_id, client_settings):
         print(f"ERROR: client '{client_id}' has no cities/categories configured.")
         return []
 
+    # ── Enforce the cap PER DAY, not per run ──
+    leads_used_today = load_daily_usage(client_id)
+    remaining_cap = daily_cap - leads_used_today
+    if remaining_cap <= 0:
+        print(f"[{client_id}] Daily cap of {daily_cap} already reached today "
+              f"({leads_used_today} used) — skipping run, no API calls made.")
+        return []
+    print(f"[{client_id}] {leads_used_today}/{daily_cap} leads used today — "
+          f"{remaining_cap} remaining for this run.")
+
     search_queries = [
         f"{category} in {city}" for city in cities for category in categories
     ]
@@ -216,15 +259,15 @@ def find_leads_for_client(client_id, client_settings):
     new_keys = set()
 
     for query in search_queries:
-        if len(all_leads) >= daily_cap:
-            print(f"[{client_id}] Reached daily cap of {daily_cap} leads — stopping search.")
+        if len(all_leads) >= remaining_cap:
+            print(f"[{client_id}] Reached remaining daily allowance ({remaining_cap}) — stopping search.")
             break
 
         print(f"[{client_id}] Searching: {query}")
         places = search_places(query, API_KEY)  # shared key, client's own query
 
         for place in places:
-            if len(all_leads) >= daily_cap:
+            if len(all_leads) >= remaining_cap:
                 break
             if not passes_size_filter(place, min_reviews):
                 continue
@@ -256,6 +299,10 @@ def find_leads_for_client(client_id, client_settings):
         save_seen_businesses(seen, client_id)
         print(f"[{client_id}] Added {len(new_keys)} new businesses "
               f"(total tracked: {len(seen)}).")
+
+    # Update today's usage total so the NEXT run today (if any) respects
+    # what's already been spent, regardless of how many leads passed filters.
+    save_daily_usage(client_id, leads_used_today + len(all_leads))
 
     return all_leads
 
