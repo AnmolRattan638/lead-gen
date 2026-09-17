@@ -58,5 +58,28 @@
     "daily_lead_cap": 20,
     "min_reviews": 40,
     "active": true
+  },
+  "client_6801": {
+    "name": "Soul",
+    "email": "meaningless1727@gmail.com",
+    "cities": [
+      "hyderabad",
+      "Telangana",
+      "India"
+    ],
+    "categories": [
+      "hair salons",
+      "restaurants",
+      "pet grooming",
+      "fitness centers",
+      "real estate agencies",
+      "auto repair shops",
+      "home cleaning services",
+      "law offices",
+      "Business owners"
+    ],
+    "daily_lead_cap": 20,
+    "min_reviews": 40,
+    "active": true
   }
 }
