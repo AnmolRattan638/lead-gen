@@ -2,8 +2,16 @@
   "client_001": {
     "name": "Priya's Freelance Leads",
     "email": "priya@example.com",
-    "cities": ["Jaipur", "Udaipur", "Jodhpur"],
-    "categories": ["salons", "clinics", "gyms"],
+    "cities": [
+      "Jaipur",
+      "Udaipur",
+      "Jodhpur"
+    ],
+    "categories": [
+      "salons",
+      "clinics",
+      "gyms"
+    ],
     "daily_lead_cap": 20,
     "min_reviews": 40,
     "active": true
@@ -11,10 +19,44 @@
   "client_002": {
     "name": "Rahul's Lead Finder",
     "email": "rahul@example.com",
-    "cities": ["Pune", "Nashik"],
-    "categories": ["restaurants", "cafes"],
+    "cities": [
+      "Pune",
+      "Nashik"
+    ],
+    "categories": [
+      "restaurants",
+      "cafes"
+    ],
     "daily_lead_cap": 15,
     "min_reviews": 30,
+    "active": true
+  },
+  "client_5141": {
+    "name": "Anmol Rattan",
+    "email": "anmolrattan852@gmail.com",
+    "cities": [
+      "Una",
+      "Nangal",
+      "Chicago",
+      "Washington"
+    ],
+    "categories": [
+      "Restaurant",
+      "Real Estate Agency",
+      "Fitness Center",
+      "Beauty Salon",
+      "Hotel",
+      "Wedding Venue",
+      "real estate agencies",
+      "event planners",
+      "photography studios",
+      "restaurants",
+      "fitness centers",
+      "beauty salons",
+      "car dealerships"
+    ],
+    "daily_lead_cap": 20,
+    "min_reviews": 40,
     "active": true
   }
 }
