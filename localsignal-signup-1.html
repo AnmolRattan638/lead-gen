@@ -419,6 +419,9 @@
         <span class="trust-dot"></span>
         <span>No spam</span>
       </div>
+      <p style="margin-top:0.75rem;font-size:0.9rem;color:var(--muted, #888)">
+        Already a client? <a href="client-config.html" style="color:var(--primary);text-decoration:underline">Manage your settings here</a>
+      </p>
     </header>
 
     <section class="panel" aria-labelledby="setup-title">
@@ -683,7 +686,7 @@
         showStatus('success', 'You’re set, ' + name.split(' ')[0] + '. Your Client ID is ' + data.client_id + ' — save this to look up or edit your settings later. Leads will arrive at ' + email + ' soon.');
 
         setTimeout(() => {
-          window.location.href = 'client-config.html?client_id=' + encodeURIComponent(data.client_id);
+          window.location.href = 'client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email);
         }, 1800);
       } catch (err) {
         console.error('Signup submission error:', err);
