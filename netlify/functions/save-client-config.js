@@ -133,6 +133,19 @@ exports.handler = async function (event) {
     const registryFile = await getFile(REGISTRY_PATH, GITHUB_USERNAME, GITHUB_REPO, GITHUB_TOKEN);
     const registry = registryFile.content || {};
     const existing = registry[clientId];
+
+    // SECURITY: if this client already exists, the submitted email must
+    // match what's on file — otherwise anyone who finds/guesses a
+    // client_id could overwrite someone else's real data. This means
+    // email can't be changed through this form; that's an intentional
+    // trade-off until a proper account-change flow exists.
+    if (existing && (existing.email || "").trim().toLowerCase() !== (body.email || "").trim().toLowerCase()) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: "Email does not match the client on file" }),
+      };
+    }
+
     const previousActive = existing ? !!existing.active : undefined;
     const newActive = newClientData.active;
 
