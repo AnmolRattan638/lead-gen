@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { width: 100vw; margin: 0; padding: 0; } body { overscroll-behavior: none; } .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); } .pt-safe { padding-top: env(safe-area-inset-top, 0px); } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-fixed": "#002113", "outline": "#86948a", "secondary-fixed": "#acedff", "tertiary-fixed-dim": "#adc6ff", "outline-variant": "#3c4a42", "on-primary-container": "#00422b", "on-primary-fixed-variant": "#005236", "on-secondary-fixed": "#001f26", "on-error-container": "#ffdad6", "surface-tint": "#4edea3", "surface-container-high": "#1b2b3f", "surface-container": "#102034", "secondary-container": "#03b5d3", "on-tertiary-container": "#00367a", "inverse-on-surface": "#213145", "on-tertiary-fixed-variant": "#004395", "tertiary-fixed": "#d8e2ff", "background": "#031427", "surface-bright": "#2a3a4f", "primary-fixed-dim": "#4edea3", "secondary": "#4cd7f6", "on-tertiary-fixed": "#001a42", "on-surface": "#d3e4fe", "primary-fixed": "#6ffbbe", "tertiary": "#adc6ff", "surface": "#031427", "surface-container-lowest": "#000f21", "error": "#ffb4ab", "secondary-fixed-dim": "#4cd7f6", "on-surface-variant": "#bbcabf", "inverse-primary": "#006c49", "inverse-surface": "#d3e4fe", "surface-dim": "#031427", "tertiary-container": "#71a1ff", "on-error": "#690005", "error-container": "#93000a", "on-tertiary": "#002e6a", "on-background": "#d3e4fe", "surface-container-highest": "#26364a", "surface-variant": "#26364a", "on-secondary": "#003640", "on-secondary-fixed-variant": "#004e5c", "primary": "#4edea3", "on-secondary-container": "#00424e", "on-primary": "#003824", "primary-container": "#10b981", "surface-container-low": "#0b1c30" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "2rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "space-2xl": "3rem", "margin": "2rem", "space-md": "1rem", "gutter": "1.5rem", "gutter-mobile": "0.75rem", "margin-mobile": "1rem" }, "fontFamily": { "headline-lg-mobile": ["Plus Jakarta Sans"], "code-xs": ["JetBrains Mono"], "code-sm": ["JetBrains Mono"], "body-md": ["Inter"], "display-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "title-md": ["Inter"], "label-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "headline-lg": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "code-xs": ["11px", {"lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400"}], "code-sm": ["12px", {"lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400"}], "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}], "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700"}], "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600"}], "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}], "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}], "headline-sm": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400"}], "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col antialiased selection:bg-primary selection:text-on-primary"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-gutter-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="LeadPulse Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WBoZ_hJaJ3SgP7NdV6375A0pIGE71P-Pa_c5kNlVEIy_bIjljSSiQ8emgz2_fCa3pPP6mNhF7upgYuyUfUsmL6hsAaNBiidjpqIwQsNm4pdMkNnpvo9h_QS08MlUIGbKccntYCuEozD4GO0LnqCxF9bu4EaP676FIDa2E8E59kiDcRUcyYKWvop4BoIzF8zLjwxFVzvo-B76rgFq5m6lgA15hlnl24qTxW6KbciAswD8TS0i3QcIOValaI"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-title-md text-title-md text-on-surface tracking-tight leading-none">LeadPulse Portal</span><span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-code-xs text-code-xs flex items-center gap-1 leading-none"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>Service Online</span></div><span class="font-label-md text-label-md text-on-surface-variant leading-none mt-0.5">Configure</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Quick switcher" class="w-11 h-11 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">swap_horiz</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full px-gutter-mobile space-y-space-md">
+<!-- Header Context & Quick Overview -->
+<div class="flex flex-col pt-space-sm">
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary font-label-md text-label-md tracking-wide">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+        PIPELINE READY
+      </span>
+<span class="font-code-xs text-code-xs text-secondary flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">bolt</span> Latency: 42ms
+      </span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-2 tracking-tight">Lead Search Configuration</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5 leading-relaxed">
+      Set target criteria to automate daily verified lead delivery straight to your sales pipeline.
+    </p>
+</div>
+<!-- Client Lookup Accordion / Card -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md">
+<div class="flex items-center justify-between cursor-pointer select-none" id="lookupToggle">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0 text-secondary">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-md text-title-md text-on-surface truncate">Already have a Client ID?</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Restore and tweak active criteria</span>
+</div>
+</div>
+<button aria-label="Toggle lookup" class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-transform" id="lookupChevron" type="button">
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</button>
+</div>
+<!-- Collapsible Lookup Form -->
+<div class="mt-space-md pt-space-md space-y-space-sm" id="lookupPanel">
+<label class="font-label-md text-label-md text-on-surface-variant block" for="lookupClientId">Enter Client Token / ID</label>
+<div class="flex items-center gap-space-xs">
+<div class="relative flex-1">
+<span class="absolute left-3 top-2.5 text-on-surface-variant material-symbols-outlined text-[18px]">tag</span>
+<input class="w-full h-11 pl-9 pr-3 bg-surface-container-lowest text-on-surface rounded-lg font-code-sm text-code-sm focus:outline-none focus:bg-surface-container-high transition-colors" id="lookupClientId" placeholder="e.g. client_042" type="text" value="client_042"/>
+</div>
+<button class="h-11 px-space-md bg-secondary-container text-on-secondary-container rounded-lg font-title-md text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform shrink-0" id="btnLoadSettings" type="button">
+<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+<span>Load</span>
+</button>
+</div>
+<div class="font-code-xs text-code-xs text-primary hidden flex items-center gap-1 pt-1" id="lookupStatus">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Settings loaded for Apex Aesthetic Clinic</span>
+</div>
+</div>
+</div>
+<!-- Lead Configuration Form Container -->
+<form class="bg-surface-container rounded-xl p-space-md shadow-lg space-y-space-lg" id="leadConfigForm" onsubmit="event.preventDefault();">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">tune</span>
+<span class="font-title-md text-title-md text-on-surface">Target Persona &amp; Parameters</span>
+</div>
+<span class="font-code-xs text-code-xs text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded">v2.4 Engine</span>
+</div>
+<!-- Field 1: Business / Client Name -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-title-md text-title-md text-on-surface" for="clientName">Business / Client Name</label>
+<span class="font-label-md text-label-md text-primary">Required</span>
+</div>
+<div class="relative">
+<span class="absolute left-3.5 top-3 text-on-surface-variant material-symbols-outlined text-[20px]">storefront</span>
+<input class="w-full h-11 pl-11 pr-4 bg-surface-container-lowest text-on-surface rounded-lg font-body-md text-body-md focus:outline-none focus:bg-surface-container-high transition-colors" id="clientName" placeholder="e.g. Apex Aesthetic Clinic" required="" type="text" value="Apex Aesthetic Clinic"/>
+</div>
+</div>
+<!-- Field 2: Email Address -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-title-md text-title-md text-on-surface" for="clientEmail">Delivery Email Address</label>
+<span class="font-label-md text-label-md text-primary">Required</span>
+</div>
+<div class="relative">
+<span class="absolute left-3.5 top-3 text-on-surface-variant material-symbols-outlined text-[20px]">alternate_email</span>
+<input class="w-full h-11 pl-11 pr-4 bg-surface-container-lowest text-on-surface rounded-lg font-body-md text-body-md focus:outline-none focus:bg-surface-container-high transition-colors" id="clientEmail" placeholder="e.g. dr.arora@apexaesthetics.com" required="" type="email" value="dr.arora@apexaesthetics.com"/>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+        Used to deliver daily lead batches, instant alerts, and verified CSV pipeline exports.
+      </p>
+</div>
+<!-- Field 3: Cities to Search -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="font-title-md text-title-md text-on-surface">Cities to Search</label>
+<span class="font-code-xs text-code-xs text-secondary" id="cityCount">2 selected</span>
+</div>
+<!-- Interactive City Tags Container -->
+<div class="bg-surface-container-lowest p-2.5 rounded-lg flex flex-wrap gap-2 items-center min-h-[50px]" id="citiesList">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container-high text-on-surface rounded-full font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-secondary">location_on</span>
+<span>Jaipur</span>
+<button aria-label="Remove Jaipur" class="text-on-surface-variant hover:text-error ml-0.5 remove-tag" data-val="Jaipur" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container-high text-on-surface rounded-full font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-secondary">location_on</span>
+<span>Udaipur</span>
+<button aria-label="Remove Udaipur" class="text-on-surface-variant hover:text-error ml-0.5 remove-tag" data-val="Udaipur" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- Inline City Add Trigger -->
+<div class="flex items-center gap-1 bg-surface-container-highest px-2.5 py-1 rounded-full text-on-surface">
+<input class="bg-transparent text-on-surface font-label-md text-label-md placeholder-on-surface-variant focus:outline-none w-20" id="newCityInput" placeholder="+ Add City" type="text"/>
+<button aria-label="Confirm city add" class="text-primary hover:text-primary-fixed" id="btnAddCity" type="button">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+</button>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Geo-clusters scraped daily across municipal business registers.</p>
+</div>
+<!-- Field 4: Business Categories to Search For -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="font-title-md text-title-md text-on-surface">Business Categories</label>
+<span class="font-code-xs text-code-xs text-secondary" id="categoryCount">3 selected</span>
+</div>
+<!-- Categories Container -->
+<div class="bg-surface-container-lowest p-2.5 rounded-lg flex flex-wrap gap-2 items-center min-h-[50px]" id="categoriesList">
+<div class="inline-flex items-center gap-1 px-3 py-1 bg-primary/15 text-primary rounded-full font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">category</span>
+<span>clinics</span>
+<button aria-label="Remove clinics" class="text-on-surface-variant hover:text-error ml-0.5 remove-cat" data-val="clinics" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="inline-flex items-center gap-1 px-3 py-1 bg-primary/15 text-primary rounded-full font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">category</span>
+<span>salons</span>
+<button aria-label="Remove salons" class="text-on-surface-variant hover:text-error ml-0.5 remove-cat" data-val="salons" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="inline-flex items-center gap-1 px-3 py-1 bg-primary/15 text-primary rounded-full font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">category</span>
+<span>gyms</span>
+<button aria-label="Remove gyms" class="text-on-surface-variant hover:text-error ml-0.5 remove-cat" data-val="gyms" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Quick-Add Pills Suggestions -->
+<div class="flex items-center gap-1.5 flex-wrap pt-1">
+<span class="font-label-md text-label-md text-on-surface-variant">Suggestions:</span>
+<button class="quick-suggest px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded font-label-md text-label-md transition-colors flex items-center gap-1" data-suggest="restaurants" type="button">
+<span>restaurants</span>
+<span class="material-symbols-outlined text-[14px] text-primary">add</span>
+</button>
+<button class="quick-suggest px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded font-label-md text-label-md transition-colors flex items-center gap-1" data-suggest="cafes" type="button">
+<span>cafes</span>
+<span class="material-symbols-outlined text-[14px] text-primary">add</span>
+</button>
+<button class="quick-suggest px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded font-label-md text-label-md transition-colors flex items-center gap-1" data-suggest="spas" type="button">
+<span>spas</span>
+<span class="material-symbols-outlined text-[14px] text-primary">add</span>
+</button>
+</div>
+</div>
+<!-- Field 5: Daily Lead Limit -->
+<div class="space-y-2 bg-surface-container-low p-space-md rounded-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<label class="font-title-md text-title-md text-on-surface" for="leadLimitRange">Daily Lead Limit</label>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-code-xs text-code-xs">Max cap 20</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-primary font-bold" id="limitDisplay">20</span>
+</div>
+<!-- Interactive Stepper Slider -->
+<div class="flex items-center gap-3">
+<button aria-label="Decrease daily lead limit" class="w-9 h-9 rounded-lg bg-surface-container-highest text-on-surface flex items-center justify-center active:scale-95 transition-transform" id="btnDecLimit" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<input class="flex-1 accent-primary h-2 bg-surface-container-lowest rounded-lg cursor-pointer" id="leadLimitRange" max="20" min="5" step="1" type="range" value="20"/>
+<button aria-label="Increase daily lead limit" class="w-9 h-9 rounded-lg bg-surface-container-highest text-on-surface flex items-center justify-center active:scale-95 transition-transform" id="btnIncLimit" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="flex justify-between font-code-xs text-code-xs text-on-surface-variant">
+<span>Min: 5/day</span>
+<span>Optimal: 15-20/day</span>
+<span>Tier Max: 20</span>
+</div>
+</div>
+<!-- Field 6: Minimum Reviews Filter -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-title-md text-title-md text-on-surface" for="minReviews">Minimum Reviews Filter</label>
+<span class="font-code-xs text-code-xs text-primary bg-primary/10 px-2 py-0.5 rounded">High Intent Filter</span>
+</div>
+<div class="relative">
+<span class="absolute left-3.5 top-3 text-on-surface-variant material-symbols-outlined text-[20px]">rate_review</span>
+<input class="w-full h-11 pl-11 pr-4 bg-surface-container-lowest text-on-surface rounded-lg font-body-md text-body-md focus:outline-none focus:bg-surface-container-high transition-colors" id="minReviews" max="500" min="0" type="number" value="40"/>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+        Excludes businesses with fewer reviews to guarantee high-intent targets and active establishments.
+      </p>
+</div>
+<!-- Field 7: Active Toggle -->
+<div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
+<div class="space-y-1 flex-1">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary" id="toggleDot"></span>
+<span class="font-title-md text-title-md text-on-surface">Active Lead Pipeline</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Turns automated daily lead scrapers on/off without clearing your settings or search history.
+        </p>
+</div>
+<!-- Modern Toggle Control -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+<input checked="" class="sr-only peer" id="pipelineToggle" type="checkbox"/>
+<div class="w-12 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Primary CTA Submission Button -->
+<div class="pt-space-xs">
+<button class="w-full h-12 bg-primary hover:bg-primary-fixed-dim text-on-primary font-title-md text-title-md rounded-lg flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] transition-transform" id="btnDeploy" type="button">
+<span class="material-symbols-outlined text-[22px]">rocket_launch</span>
+<span>Save &amp; Deploy Lead Search</span>
+</button>
+</div>
+</form>
+<!-- Generated Client Settings Confirmation Card / Live Output -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-xl space-y-space-md transition-all" id="confirmationCard">
+<!-- Success Banner -->
+<div class="flex items-center justify-between bg-primary/10 p-3 rounded-lg">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-md text-title-md text-primary truncate" id="successHeading">Configuration Saved!</span>
+<span class="font-code-xs text-code-xs text-on-surface-variant truncate" id="configTimestamp">Synced just now</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="font-code-xs text-code-xs text-on-surface bg-surface-container-high px-2 py-1 rounded" id="clientTokenBadge">client_794</span>
+<button aria-label="Copy Client ID" class="w-8 h-8 rounded bg-surface-container-high hover:bg-surface-container-highest text-secondary flex items-center justify-center transition-colors" id="btnCopyId" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Action Buttons Under Confirmation -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<button class="h-10 px-3 bg-surface-container-high hover:bg-surface-container-highest text-secondary rounded-lg font-title-md text-body-md flex items-center justify-center gap-1.5 transition-colors" id="btnSendTest" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span id="testBatchText">Send Test Batch</span>
+</button>
+<button class="h-10 px-3 bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface rounded-lg font-title-md text-body-md flex items-center justify-center gap-1.5 transition-colors" id="btnEditPreferences" type="button">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+<span>Edit Preferences</span>
+</button>
+</div>
+</div>
+<!-- Micro Visual Stats / Pipeline Velocity Footer Insight -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">hub</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface">Continuous Discovery</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Crawlers dispatched every midnight IST</span>
+</div>
+</div>
+<span class="font-code-xs text-code-xs text-primary px-2.5 py-1 rounded bg-primary/10">ACTIVE</span>
+</div>
+</div>
+<!-- Client-side Interactive Behaviors -->
+<script>
+  (function() {
+    let currentClientId = "client_794";
+    let cities = ["Jaipur", "Udaipur"];
+    let categories = ["clinics", "salons", "gyms"];
+
+    const clientNameInput = document.getElementById("clientName");
+    const clientEmailInput = document.getElementById("clientEmail");
+    const leadLimitRange = document.getElementById("leadLimitRange");
+    const limitDisplay = document.getElementById("limitDisplay");
+    const btnDecLimit = document.getElementById("btnDecLimit");
+    const btnIncLimit = document.getElementById("btnIncLimit");
+    const minReviewsInput = document.getElementById("minReviews");
+    const pipelineToggle = document.getElementById("pipelineToggle");
+    const toggleDot = document.getElementById("toggleDot");
+    const clientTokenBadge = document.getElementById("clientTokenBadge");
+    const configTimestamp = document.getElementById("configTimestamp");
+    const citiesList = document.getElementById("citiesList");
+    const categoriesList = document.getElementById("categoriesList");
+    const newCityInput = document.getElementById("newCityInput");
+    const btnAddCity = document.getElementById("btnAddCity");
+    const cityCount = document.getElementById("cityCount");
+    const categoryCount = document.getElementById("categoryCount");
+
+    // Kept as the single source of truth for "what would be submitted" —
+    // used internally by the deploy handler, no longer rendered visibly
+    // as raw JSON (removed for a cleaner, less technical-looking UI).
+    function renderJSON() {
+      clientTokenBadge.textContent = currentClientId;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function updateCityUI() {
+      const tags = cities.map(c => `
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container-high text-on-surface rounded-full font-label-md text-label-md">
+          <span class="material-symbols-outlined text-[14px] text-secondary">location_on</span>
+          <span>${escapeHtml(c)}</span>
+          <button type="button" aria-label="Remove ${escapeHtml(c)}" class="text-on-surface-variant hover:text-error ml-0.5 remove-tag" data-val="${escapeHtml(c)}">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+      `).join("");
+
+      const inputBlock = `
+        <div class="flex items-center gap-1 bg-surface-container-highest px-2.5 py-1 rounded-full text-on-surface">
+          <input 
+            type="text" 
+            id="newCityInput" 
+            placeholder="+ Add City" 
+            class="bg-transparent text-on-surface font-label-md text-label-md placeholder-on-surface-variant focus:outline-none w-20"
+          />
+          <button type="button" id="btnAddCity" aria-label="Confirm city add" class="text-primary hover:text-primary-fixed">
+            <span class="material-symbols-outlined text-[16px]">add_circle</span>
+          </button>
+        </div>
+      `;
+
+      citiesList.innerHTML = tags + inputBlock;
+      cityCount.textContent = `${cities.length} selected`;
+
+      const renewedInput = document.getElementById("newCityInput");
+      const renewedBtn = document.getElementById("btnAddCity");
+      renewedBtn.addEventListener("click", handleAddCity);
+      renewedInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleAddCity();
+        }
+      });
+
+      document.querySelectorAll(".remove-tag").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const val = e.currentTarget.getAttribute("data-val");
+          cities = cities.filter(item => item !== val);
+          updateCityUI();
+          renderJSON();
+        });
+      });
+    }
+
+    function handleAddCity() {
+      const input = document.getElementById("newCityInput");
+      if (!input) return;
+      const val = input.value.trim();
+      if (val && !cities.includes(val)) {
+        cities.push(val);
+        updateCityUI();
+        renderJSON();
+      }
+    }
+
+    function updateCategoryUI() {
+      const tags = categories.map(cat => `
+        <div class="inline-flex items-center gap-1 px-3 py-1 bg-primary/15 text-primary rounded-full font-label-md text-label-md">
+          <span class="material-symbols-outlined text-[14px]">category</span>
+          <span>${escapeHtml(cat)}</span>
+          <button type="button" aria-label="Remove ${escapeHtml(cat)}" class="text-on-surface-variant hover:text-error ml-0.5 remove-cat" data-val="${escapeHtml(cat)}">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+      `).join("");
+
+      categoriesList.innerHTML = tags;
+      categoryCount.textContent = `${categories.length} selected`;
+
+      document.querySelectorAll(".remove-cat").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const val = e.currentTarget.getAttribute("data-val");
+          categories = categories.filter(item => item !== val);
+          updateCategoryUI();
+          renderJSON();
+        });
+      });
+    }
+
+    // Suggested Pills Quick Add
+    document.querySelectorAll(".quick-suggest").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const val = pill.getAttribute("data-suggest");
+        if (val && !categories.includes(val)) {
+          categories.push(val);
+          updateCategoryUI();
+          renderJSON();
+        }
+      });
+    });
+
+    // Lead limit range & steppers
+    leadLimitRange.addEventListener("input", () => {
+      limitDisplay.textContent = leadLimitRange.value;
+      renderJSON();
+    });
+
+    btnDecLimit.addEventListener("click", () => {
+      let val = parseInt(leadLimitRange.value, 10);
+      if (val > 5) {
+        val -= 1;
+        leadLimitRange.value = val;
+        limitDisplay.textContent = val;
+        renderJSON();
+      }
+    });
+
+    btnIncLimit.addEventListener("click", () => {
+      let val = parseInt(leadLimitRange.value, 10);
+      if (val < 50) {
+        val += 1;
+        leadLimitRange.value = val;
+        limitDisplay.textContent = val;
+        renderJSON();
+      }
+    });
+
+    // Inputs live reactivity
+    clientNameInput.addEventListener("input", renderJSON);
+    clientEmailInput.addEventListener("input", renderJSON);
+    minReviewsInput.addEventListener("input", renderJSON);
+    pipelineToggle.addEventListener("change", () => {
+      if (pipelineToggle.checked) {
+        toggleDot.classList.replace("bg-on-surface-variant", "bg-primary");
+      } else {
+        toggleDot.classList.replace("bg-primary", "bg-on-surface-variant");
+      }
+      renderJSON();
+    });
+
+    // Initial City bindings
+    updateCityUI();
+    updateCategoryUI();
+
+    // Lookup Toggle & Action
+    const lookupToggle = document.getElementById("lookupToggle");
+    const lookupPanel = document.getElementById("lookupPanel");
+    const lookupChevron = document.getElementById("lookupChevron");
+    const btnLoadSettings = document.getElementById("btnLoadSettings");
+    const lookupStatus = document.getElementById("lookupStatus");
+    const lookupClientId = document.getElementById("lookupClientId");
+
+    lookupToggle.addEventListener("click", () => {
+      lookupPanel.classList.toggle("hidden");
+      lookupChevron.classList.toggle("rotate-180");
+    });
+
+    // Fetch a single client's saved config via the get-client Netlify
+    // function — the GitHub token now stays server-side entirely, never
+    // shipped to the browser.
+    let isEditingExisting = false;
+
+    async function fetchClientConfig(clientId) {
+      const response = await fetch(`/.netlify/functions/get-client?client_id=${encodeURIComponent(clientId)}`);
+
+      if (response.status === 404) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error(`Lookup failed (${response.status})`);
+      }
+
+      return await response.json();
+    }
+
+    function applyClientConfig(clientId, client) {
+      currentClientId = clientId;
+      isEditingExisting = true;
+      clientNameInput.value = client.name || "";
+      clientEmailInput.value = client.email || "";
+      cities = Array.isArray(client.cities) ? client.cities.slice() : [];
+      categories = Array.isArray(client.categories) ? client.categories.slice() : [];
+
+      const cap = Math.min(Math.max(parseInt(client.daily_lead_cap, 10) || 20, 5), 50);
+      leadLimitRange.value = cap;
+      limitDisplay.textContent = cap;
+      minReviewsInput.value = client.min_reviews != null ? client.min_reviews : 0;
+
+      pipelineToggle.checked = !!client.active;
+      if (pipelineToggle.checked) {
+        toggleDot.classList.replace("bg-on-surface-variant", "bg-primary");
+      } else {
+        toggleDot.classList.replace("bg-primary", "bg-on-surface-variant");
+      }
+
+      updateCityUI();
+      updateCategoryUI();
+      renderJSON();
+    }
+
+    async function runClientLookup(queryId) {
+      if (!queryId) {
+        lookupStatus.classList.remove("hidden");
+        lookupStatus.innerHTML = `<span class="material-symbols-outlined text-[14px] text-error">error</span><span>Enter a Client ID to look up.</span>`;
+        return;
+      }
+
+      lookupStatus.classList.remove("hidden");
+      lookupStatus.innerHTML = `<span class="material-symbols-outlined text-[14px]">hourglass_top</span><span>Looking up ${escapeHtml(queryId)}…</span>`;
+
+      try {
+        const client = await fetchClientConfig(queryId);
+        if (!client) {
+          lookupStatus.innerHTML = `<span class="material-symbols-outlined text-[14px] text-error">error</span><span>No client found with ID ${escapeHtml(queryId)}.</span>`;
+          return;
+        }
+        applyClientConfig(queryId, client);
+        lookupStatus.innerHTML = `<span class="material-symbols-outlined text-[14px]">check_circle</span><span>Loaded active configuration for ${escapeHtml(queryId)}</span>`;
+        configTimestamp.textContent = "Restored: " + new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error("Lookup failed:", err);
+        lookupStatus.innerHTML = `<span class="material-symbols-outlined text-[14px] text-error">error</span><span>Lookup failed — check console for details.</span>`;
+      }
+    }
+
+    btnLoadSettings.addEventListener("click", () => {
+      runClientLookup(lookupClientId.value.trim());
+    });
+
+    // Auto-run the lookup if we arrived here from the signup page's
+    // redirect, e.g. client-config.html?client_id=client_8018
+    (function autoLoadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const urlClientId = params.get("client_id");
+      if (urlClientId) {
+        lookupClientId.value = urlClientId;
+        lookupPanel.classList.remove("hidden");
+        lookupChevron.classList.add("rotate-180");
+        runClientLookup(urlClientId);
+      }
+    })();
+
+    // ─── SAVE VIA NETLIFY FUNCTION ───
+    // Credentials for writing to GitHub now live only in the
+    // save-client-config Netlify function's environment variables —
+    // never in this file, never shipped to the browser.
+    async function saveClientConfig(clientId, clientData) {
+      const response = await fetch("/.netlify/functions/save-client-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: clientId, ...clientData })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Save failed (${response.status}): ${errorText}`);
+      }
+    }
+
+    // Deploy Button Action
+    const btnDeploy = document.getElementById("btnDeploy");
+    const confirmationCard = document.getElementById("confirmationCard");
+    const successHeading = document.getElementById("successHeading");
+
+    btnDeploy.addEventListener("click", async () => {
+      if (!isEditingExisting) {
+        currentClientId = "client_" + Math.floor(1000 + Math.random() * 9000);
+      }
+      renderJSON();
+
+      const clientData = {
+        name: clientNameInput.value || "Unnamed Client",
+        email: clientEmailInput.value || "",
+        cities: cities,
+        categories: categories,
+        daily_lead_cap: Math.min(parseInt(leadLimitRange.value, 10) || 20, 20),
+        min_reviews: parseInt(minReviewsInput.value, 10) || 0,
+        active: pipelineToggle.checked
+      };
+
+      // Basic validation — don't send an incomplete config
+      if (!clientData.email || cities.length === 0 || categories.length === 0) {
+        successHeading.textContent = "Please fill in email, at least one city, and one category.";
+        successHeading.classList.add("text-error");
+        confirmationCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      successHeading.textContent = "Deploying...";
+      successHeading.classList.remove("text-error");
+
+      try {
+        await saveClientConfig(currentClientId, clientData);
+        isEditingExisting = true;
+
+        configTimestamp.textContent = "Deployed: " + new Date().toLocaleTimeString();
+        successHeading.textContent = `Configuration Saved! (${currentClientId})`;
+
+        confirmationCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        confirmationCard.classList.add("ring-2", "ring-primary");
+        setTimeout(() => {
+          confirmationCard.classList.remove("ring-2", "ring-primary");
+        }, 1200);
+      } catch (err) {
+        console.error("Deploy failed:", err);
+        successHeading.textContent = "Deploy failed — check console for details.";
+        successHeading.classList.add("text-error");
+        confirmationCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    // Copy Client ID
+    const btnCopyId = document.getElementById("btnCopyId");
+    btnCopyId.addEventListener("click", () => {
+      navigator.clipboard.writeText(currentClientId).then(() => {
+        const original = btnCopyId.innerHTML;
+        btnCopyId.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary">done</span>`;
+        setTimeout(() => { btnCopyId.innerHTML = original; }, 1500);
+      });
+    });
+
+    // Send Test Batch Action
+    const btnSendTest = document.getElementById("btnSendTest");
+    const testBatchText = document.getElementById("testBatchText");
+    btnSendTest.addEventListener("click", () => {
+      testBatchText.textContent = "Dispatching...";
+      setTimeout(() => {
+        testBatchText.textContent = "Batch Sent!";
+        setTimeout(() => { testBatchText.textContent = "Send Test Batch"; }, 2000);
+      }, 800);
+    });
+
+    // Edit Preferences trigger focus
+    const btnEditPreferences = document.getElementById("btnEditPreferences");
+    btnEditPreferences.addEventListener("click", () => {
+      clientNameInput.focus();
+      clientNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // Initial render
+    renderJSON();
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-title-md"><div class="h-16 px-margin-mobile flex items-center justify-around"><a aria-current="page" class="flex flex-col items-center justify-center min-w-[64px] min-h-[44px] transition-colors text-primary font-title-md" data-path="configure" href="#"><span class="material-symbols-outlined text-[22px]">tune</span><span class="font-label-md text-label-md mt-0.5">Configure</span></a><a class="flex flex-col items-center justify-center min-w-[64px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="my-leads" href="#"><span class="material-symbols-outlined text-[22px]">group</span><span class="font-label-md text-label-md mt-0.5">My Leads</span></a><a class="flex flex-col items-center justify-center min-w-[64px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="lookup" href="#"><span class="material-symbols-outlined text-[22px]">manage_search</span><span class="font-label-md text-label-md mt-0.5">Lookup</span></a></div></nav></body></html>
