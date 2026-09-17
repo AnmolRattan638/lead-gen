@@ -3,10 +3,15 @@
 // ============================================================
 // Lives at: netlify/functions/get-client.js
 // Called by client-config.html via
-// fetch("/.netlify/functions/get-client?client_id=client_8018")
+// fetch("/.netlify/functions/get-client?client_id=client_8018&email=...")
 //
 // Replaces the old client-side GitHub API call that shipped a live
 // GitHub token to the browser. The token now stays server-side only.
+//
+// SECURITY: requires BOTH client_id AND the matching email on file —
+// a client_id alone is just a small random number, easy to guess or
+// brute-force, so it can't act as the only credential for looking up
+// (and, via save-client-config, editing) someone else's data.
 //
 // SETUP REQUIRED (in Netlify dashboard, not in this file):
 //   Site Settings → Environment variables → add:
@@ -48,11 +53,14 @@ exports.handler = async function (event) {
     };
   }
 
-  const clientId = event.queryStringParameters && event.queryStringParameters.client_id;
-  if (!clientId) {
+  const params = event.queryStringParameters || {};
+  const clientId = params.client_id;
+  const email = (params.email || "").trim().toLowerCase();
+
+  if (!clientId || !email) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: "Missing client_id query parameter" }),
+      body: JSON.stringify({ error: "Missing client_id or email" }),
     };
   }
 
@@ -72,10 +80,12 @@ exports.handler = async function (event) {
     const registry = (await getFile(REGISTRY_PATH, GITHUB_USERNAME, GITHUB_REPO, GITHUB_TOKEN)) || {};
     const client = registry[clientId];
 
-    if (!client) {
+    // Same 404 whether the ID doesn't exist or the email doesn't match —
+    // don't reveal which one was wrong, that just helps someone guessing.
+    if (!client || (client.email || "").trim().toLowerCase() !== email) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: "Client not found" }),
+        body: JSON.stringify({ error: "No matching client found" }),
       };
     }
 
