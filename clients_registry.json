@@ -81,5 +81,21 @@
     "daily_lead_cap": 20,
     "min_reviews": 40,
     "active": true
+  },
+  "client_5385": {
+    "name": "Anmol Rattan",
+    "email": "anmolrattan852@gmail.com",
+    "cities": [
+      "Colombia",
+      "Meta",
+      "Villavicencio"
+    ],
+    "categories": [
+      "Restaurant",
+      "Hotel"
+    ],
+    "daily_lead_cap": 7,
+    "min_reviews": 40,
+    "active": false
   }
 }
