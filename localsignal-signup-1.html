@@ -683,11 +683,33 @@
           throw new Error(data.error || 'Signup failed');
         }
 
-        showStatus('success', 'You’re set, ' + name.split(' ')[0] + '. Your Client ID is ' + data.client_id + ' — save this to look up or edit your settings later. Leads will arrive at ' + email + ' soon.');
+        showStatus('success', 'You’re set, ' + name.split(' ')[0] + '. Your Client ID is ' + data.client_id + ' — save this to look up or edit your settings later.');
 
-        setTimeout(() => {
-          window.location.href = 'client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email);
-        }, 1800);
+        // One more call to generate a payment link — the pipeline only
+        // turns on once this is paid, so this is where the user goes
+        // next, not straight to their (still-inactive) settings page.
+        try {
+          const payRes = await fetch('/.netlify/functions/create-payment-link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: data.client_id, name, email })
+          });
+          const payData = await payRes.json();
+
+          if (payRes.ok && payData.payment_link) {
+            showStatus('success', 'Almost done — redirecting you to complete payment…');
+            setTimeout(() => {
+              window.location.href = payData.payment_link;
+            }, 1500);
+          } else {
+            throw new Error('Payment link creation failed');
+          }
+        } catch (payErr) {
+          console.error('Payment link error:', payErr);
+          // Don't strand the user with nothing — send them to their
+          // config page with a clear note that payment is still needed.
+          showStatus('error', 'Signup saved, but we couldn’t generate a payment link. Please contact support with your Client ID above.');
+        }
       } catch (err) {
         console.error('Signup submission error:', err);
         showStatus('error', 'Something went wrong setting up your search — please try again.');
