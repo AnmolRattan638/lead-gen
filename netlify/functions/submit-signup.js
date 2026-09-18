@@ -4,12 +4,13 @@
 // Lives at: netlify/functions/submit-signup.js
 // Called by the signup form's JavaScript via fetch("/.netlify/functions/submit-signup")
 //
-// UPDATED: now writes directly to clients_registry.json AND appends
-// an entry to signups_log.json — an append-only audit trail used by
-// the monitoring dashboard to show entry/exit history over time.
-// The repository_dispatch event is still fired afterward in case any
-// existing GitHub Action depends on it for other automation (e.g. the
-// lead-search bot) — but registry/log writes no longer depend on it.
+// UPDATED: new clients are now created with active: false. Signing up
+// no longer means the pipeline runs — it only turns on once Razorpay
+// confirms payment via razorpay-webhook.js. Because of this, the
+// "entry" audit-log event is also no longer written here — it's only
+// written by the webhook, once someone has actually paid. That keeps
+// "New Signups" on the dashboard meaning real paying clients, not
+// everyone who filled out a form.
 //
 // SETUP REQUIRED (in Netlify dashboard, not in this file):
 //   Site Settings → Environment variables → add:
@@ -19,7 +20,6 @@
 // ============================================================
 
 const REGISTRY_PATH = "clients_registry.json";
-const LOG_PATH = "signups_log.json";
 
 function b64EncodeUnicode(str) {
   return Buffer.from(str, "utf-8").toString("base64");
@@ -114,7 +114,6 @@ exports.handler = async function (event) {
   }
 
   const clientId = "client_" + Math.floor(1000 + Math.random() * 9000);
-  const timestamp = new Date().toISOString();
 
   const newClient = {
     name: clientData.name || "Unnamed Client",
@@ -123,11 +122,13 @@ exports.handler = async function (event) {
     categories: clientData.categories,
     daily_lead_cap: Math.min(parseInt(clientData.daily_lead_cap, 10) || 20, 20),
     min_reviews: parseInt(clientData.min_reviews, 10) || 40,
-    active: true,
+    active: false, // stays off until Razorpay confirms payment (see razorpay-webhook.js)
   };
 
   try {
-    // 1. Add the new client to the registry (current-state source of truth)
+    // Add the new (inactive) client to the registry. No audit-log entry
+    // is written here anymore — that now happens only once payment is
+    // confirmed, so the log reflects real paying clients, not signups.
     const registryFile = await getFile(REGISTRY_PATH, GITHUB_USERNAME, GITHUB_REPO, GITHUB_TOKEN);
     const registry = registryFile.content || {};
     registry[clientId] = newClient;
@@ -135,55 +136,11 @@ exports.handler = async function (event) {
       REGISTRY_PATH,
       registry,
       registryFile.sha,
-      `Add ${clientId} to registry via signup`,
+      `Add ${clientId} to registry via signup (pending payment)`,
       GITHUB_USERNAME,
       GITHUB_REPO,
       GITHUB_TOKEN
     );
-
-    // 2. Append an entry event to the audit log (never overwritten, only
-    // ever added to — this is what the monitoring dashboard reads).
-    const logFile = await getFile(LOG_PATH, GITHUB_USERNAME, GITHUB_REPO, GITHUB_TOKEN);
-    const log = Array.isArray(logFile.content) ? logFile.content : [];
-    log.push({
-      event: "entry",
-      client_id: clientId,
-      name: newClient.name,
-      email: newClient.email,
-      cities: newClient.cities,
-      timestamp,
-    });
-    await putFile(
-      LOG_PATH,
-      log,
-      logFile.sha,
-      `Log entry event for ${clientId}`,
-      GITHUB_USERNAME,
-      GITHUB_REPO,
-      GITHUB_TOKEN
-    );
-
-    // 3. Fire the existing dispatch event too, in case other automation
-    // (e.g. the lead-search bot workflow) still depends on it. Failure
-    // here is logged but doesn't fail the signup — the registry/log
-    // writes above already succeeded and are what actually matters.
-    try {
-      const dispatchUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/dispatches`;
-      await fetch(dispatchUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-          Accept: "application/vnd.github+json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          event_type: "new_client_signup",
-          client_payload: { client_id: clientId, ...newClient },
-        }),
-      });
-    } catch (dispatchErr) {
-      console.error("Dispatch event failed (non-fatal):", dispatchErr);
-    }
 
     return {
       statusCode: 200,
