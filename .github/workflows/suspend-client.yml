@@ -1,0 +1,85 @@
+name: Suspend or Reactivate Client
+
+on:
+  workflow_dispatch:
+    inputs:
+      client_id:
+        description: 'The client_id to suspend or reactivate (e.g. client_5141)'
+        required: true
+        type: string
+      action:
+        description: 'What to do'
+        required: true
+        type: choice
+        options:
+          - suspend
+          - reactivate
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Update client status
+        id: update
+        run: |
+          python3 << 'PYEOF'
+          import json
+          from datetime import datetime, timezone
+
+          client_id = "${{ inputs.client_id }}"
+          action = "${{ inputs.action }}"
+          new_active = (action == "reactivate")
+
+          with open("clients_registry.json", "r") as f:
+              registry = json.load(f)
+
+          if client_id not in registry:
+              print(f"ERROR: client_id '{client_id}' not found in registry.")
+              exit(1)
+
+          client = registry[client_id]
+          previous_active = bool(client.get("active", False))
+
+          if previous_active == new_active:
+              print(f"No change needed — {client_id} is already {'active' if new_active else 'suspended'}.")
+              exit(0)
+
+          client["active"] = new_active
+          registry[client_id] = client
+
+          with open("clients_registry.json", "w") as f:
+              json.dump(registry, f, indent=2)
+              f.write("\n")
+
+          try:
+              with open("signups_log.json", "r") as f:
+                  log = json.load(f)
+          except FileNotFoundError:
+              log = []
+
+          log.append({
+              "event": "entry" if new_active else "exit",
+              "client_id": client_id,
+              "name": client.get("name", ""),
+              "email": client.get("email", ""),
+              "cities": client.get("cities", []),
+              "timestamp": datetime.now(timezone.utc).isoformat(),
+          })
+
+          with open("signups_log.json", "w") as f:
+              json.dump(log, f, indent=2)
+              f.write("\n")
+
+          print(f"{client_id} is now {'ACTIVE' if new_active else 'SUSPENDED'}.")
+          PYEOF
+
+      - name: Commit updated registry and log
+        run: |
+          git config user.name "admin-actions-bot"
+          git config user.email "actions@github.com"
+          git add clients_registry.json signups_log.json
+          git diff --cached --quiet || git commit -m "${{ inputs.action }}: ${{ inputs.client_id }} [skip netlify]"
+          git push
