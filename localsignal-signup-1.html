@@ -493,6 +493,15 @@
             <label for="reviews">Minimum business reviews</label>
             <input id="reviews" name="reviews" type="number" min="0" value="40" />
           </div>
+          <div class="form-row" style="display:flex;align-items:center;gap:0.5rem">
+            <input id="show-with-website" type="checkbox" style="width:auto" />
+            <label for="show-with-website" style="margin:0">
+              Show businesses that already have a website
+              <span style="display:block;font-size:0.8rem;color:var(--muted, #888);font-weight:400">
+                Leave unchecked if your pitch is building websites for businesses that don't have one yet
+              </span>
+            </label>
+          </div>
         </fieldset>
 
         <div id="status" class="status" style="display:none"></div>
@@ -665,6 +674,7 @@
         categories,
         daily_lead_cap: parseInt(leadCap.value, 10) || 20,
         min_reviews: parseInt(document.getElementById('reviews')?.value, 10) || 40,
+        require_website: !!document.getElementById('show-with-website')?.checked,
       };
 
       if (submitBtn) submitBtn.disabled = true;

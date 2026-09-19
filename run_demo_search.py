@@ -37,12 +37,14 @@ DEMO_CITY = os.environ.get("DEMO_CITY", "Dehradun")
 DEMO_CATEGORIES = os.environ.get("DEMO_CATEGORIES", "dental clinics")
 DEMO_LEAD_CAP = os.environ.get("DEMO_LEAD_CAP", "15")
 DEMO_MIN_REVIEWS = os.environ.get("DEMO_MIN_REVIEWS", "40")
+DEMO_REQUIRE_WEBSITE = os.environ.get("DEMO_REQUIRE_WEBSITE", "false").lower() == "true"
 
 DEMO_SETTINGS = {
     "cities": [c.strip() for c in DEMO_CITY.split(",") if c.strip()],
     "categories": [c.strip() for c in DEMO_CATEGORIES.split(",") if c.strip()],
     "daily_lead_cap": int(DEMO_LEAD_CAP),
     "min_reviews": int(DEMO_MIN_REVIEWS),
+    "require_website": DEMO_REQUIRE_WEBSITE,
 }
 # ──────────────────────────────────────────
 

@@ -26,6 +26,11 @@ on:
         required: false
         type: string
         default: 'demo'
+      require_website:
+        description: 'Show businesses that already have a website? (leave false for web-dev pitches)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-demo:
@@ -50,6 +55,7 @@ jobs:
           DEMO_CATEGORIES: ${{ inputs.categories }}
           DEMO_LEAD_CAP: ${{ inputs.lead_cap }}
           DEMO_MIN_REVIEWS: ${{ inputs.min_reviews }}
+          DEMO_REQUIRE_WEBSITE: ${{ inputs.require_website }}
         run: python3 run_demo_search.py
 
       - name: Upload results

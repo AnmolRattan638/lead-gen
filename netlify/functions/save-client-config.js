@@ -125,6 +125,7 @@ exports.handler = async function (event) {
     categories: body.categories,
     daily_lead_cap: Math.min(parseInt(body.daily_lead_cap, 10) || 20, 20),
     min_reviews: parseInt(body.min_reviews, 10) || 0,
+    require_website: !!body.require_website,
     active: !!body.active,
   };
 

@@ -210,6 +210,16 @@
         Excludes businesses with fewer reviews to guarantee high-intent targets and active establishments.
       </p>
 </div>
+<!-- Field 6b: Website Preference -->
+<div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
+<div class="space-y-1 flex-1">
+<label class="font-title-md text-title-md text-on-surface" for="requireWebsite">Show businesses with a website</label>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+        Leave off if your pitch is building websites for businesses that don't have one yet.
+      </p>
+</div>
+<input class="mt-1" id="requireWebsite" type="checkbox"/>
+</div>
 <!-- Field 7: Active Toggle -->
 <div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
 <div class="space-y-1 flex-1">
@@ -295,6 +305,7 @@
     const btnDecLimit = document.getElementById("btnDecLimit");
     const btnIncLimit = document.getElementById("btnIncLimit");
     const minReviewsInput = document.getElementById("minReviews");
+    const requireWebsiteInput = document.getElementById("requireWebsite");
     const pipelineToggle = document.getElementById("pipelineToggle");
     const toggleDot = document.getElementById("toggleDot");
     const clientTokenBadge = document.getElementById("clientTokenBadge");
@@ -498,6 +509,7 @@
       leadLimitRange.value = cap;
       limitDisplay.textContent = cap;
       minReviewsInput.value = client.min_reviews != null ? client.min_reviews : 0;
+      requireWebsiteInput.checked = !!client.require_website;
 
       pipelineToggle.checked = !!client.active;
       if (pipelineToggle.checked) {
@@ -588,6 +600,7 @@
         categories: categories,
         daily_lead_cap: Math.min(parseInt(leadLimitRange.value, 10) || 20, 20),
         min_reviews: parseInt(minReviewsInput.value, 10) || 0,
+        require_website: requireWebsiteInput.checked,
         active: pipelineToggle.checked
       };
 

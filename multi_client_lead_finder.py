@@ -281,6 +281,15 @@ def find_leads_for_client(client_id, client_settings):
 
             digital_status, pitch = check_digital_presence(place)
 
+            # ── Filter by the client's website preference (set at signup
+            # or changed later in client-config.html) ──
+            require_website = client_settings.get("require_website", False)
+            no_website_statuses = ("No website", "Social media only")
+            if require_website and digital_status != "Has a website":
+                continue
+            if not require_website and digital_status not in no_website_statuses:
+                continue
+
             all_leads.append({
                 "Search Query": query,
                 "Business Name": name,
