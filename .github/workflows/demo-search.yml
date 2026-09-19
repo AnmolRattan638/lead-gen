@@ -1,0 +1,60 @@
+name: Run Demo Search
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City to search (e.g. "Villavicencio, Meta, Colombia")'
+        required: true
+        type: string
+      categories:
+        description: 'Business categories, comma-separated (e.g. "hotels, restaurants")'
+        required: true
+        type: string
+      lead_cap:
+        description: 'Max leads to include in this sample'
+        required: false
+        type: string
+        default: '15'
+      min_reviews:
+        description: 'Minimum Google reviews for a business to qualify'
+        required: false
+        type: string
+        default: '40'
+      demo_label:
+        description: 'Short label for this demo, no spaces (used in the output filename)'
+        required: false
+        type: string
+        default: 'demo'
+
+jobs:
+  run-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests openpyxl
+
+      - name: Run demo search
+        env:
+          PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          DEMO_ID: demo_${{ inputs.demo_label }}
+          DEMO_CITY: ${{ inputs.city }}
+          DEMO_CATEGORIES: ${{ inputs.categories }}
+          DEMO_LEAD_CAP: ${{ inputs.lead_cap }}
+          DEMO_MIN_REVIEWS: ${{ inputs.min_reviews }}
+        run: python3 run_demo_search.py
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-leads-${{ inputs.demo_label }}
+          path: client_data/demo_${{ inputs.demo_label }}/*.xlsx
+          if-no-files-found: warn
