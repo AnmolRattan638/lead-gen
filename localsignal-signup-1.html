@@ -693,11 +693,10 @@
           throw new Error(data.error || 'Signup failed');
         }
 
-        showStatus('success', 'You’re set, ' + name.split(' ')[0] + '. Your Client ID is ' + data.client_id + ' — save this to look up or edit your settings later.');
-
-        // One more call to generate a payment link — the pipeline only
-        // turns on once this is paid, so this is where the user goes
-        // next, not straight to their (still-inactive) settings page.
+        // Get a payment link ready, but don't force the redirect — some
+        // clients want to sign up now and pay later. Their client_id and
+        // settings are already saved at this point regardless of what
+        // they choose here; they just stay inactive until they pay.
         try {
           const payRes = await fetch('/.netlify/functions/create-payment-link', {
             method: 'POST',
@@ -707,18 +706,30 @@
           const payData = await payRes.json();
 
           if (payRes.ok && payData.payment_link) {
-            showStatus('success', 'Almost done — redirecting you to complete payment…');
-            setTimeout(() => {
-              window.location.href = payData.payment_link;
-            }, 1500);
+            statusEl.className = 'status success';
+            statusEl.style.display = 'flex';
+            statusEl.innerHTML =
+              '<span>You’re set, ' + name.split(' ')[0] + '. Your Client ID is <strong>' + data.client_id + '</strong> — save this to look up or edit your settings later.' +
+              '<br><br>Your search is saved but won’t start until payment is complete.' +
+              '<br><br>' +
+              '<a href="' + payData.payment_link + '" class="submit-button" style="display:inline-block;text-decoration:none;margin-right:0.5rem">Pay now</a>' +
+              '<a href="client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email) + '" style="color:var(--primary)">Not now — I’ll pay later</a>' +
+              '</span>';
           } else {
             throw new Error('Payment link creation failed');
           }
         } catch (payErr) {
           console.error('Payment link error:', payErr);
-          // Don't strand the user with nothing — send them to their
-          // config page with a clear note that payment is still needed.
-          showStatus('error', 'Signup saved, but we couldn’t generate a payment link. Please contact support with your Client ID above.');
+          // Don't strand the user with nothing — their signup is already
+          // saved, so give them their ID and a way to check back later
+          // even though payment setup hit a snag.
+          statusEl.className = 'status error';
+          statusEl.style.display = 'flex';
+          statusEl.innerHTML =
+            '<span>Signup saved — your Client ID is <strong>' + data.client_id + '</strong> (save this).' +
+            '<br><br>We couldn’t set up payment right now. You can check your settings anytime here: ' +
+            '<a href="client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email) + '" style="color:var(--primary)">client-config.html</a>' +
+            '</span>';
         }
       } catch (err) {
         console.error('Signup submission error:', err);
