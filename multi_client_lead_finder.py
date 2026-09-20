@@ -227,6 +227,137 @@ def check_digital_presence(place):
     return "Has a website", "Has a site — worth checking if it's modern/mobile-friendly"
 
 
+# ─── STEP 3b: WEBSITE WEAK-POINT SCAN (only for leads with a real site) ───
+# Factual, signature-based checks only — this looks for known script tags
+# and HTML elements, never guesses at design/copy quality. One honest
+# limitation: a plain HTML fetch doesn't run JavaScript, so a tool that
+# injects itself after page load (rather than being in the raw HTML)
+# could be missed. Good enough as a signal, not a guarantee of absence.
+EMAIL_AUTOMATION_SIGNATURES = {
+    "Mailchimp": ["list-manage.com", "chimpstatic.com"],
+    "Klaviyo": ["klaviyo.com", "klaviyo.min.js"],
+    "Brevo": ["sibforms.com", "sendinblue.com"],
+    "HubSpot": ["hs-forms", "hsforms.net", "hubspot.com"],
+    "ConvertKit": ["convertkit.com"],
+    "ActiveCampaign": ["activecampaign.com", "activehosted.com"],
+}
+
+CHAT_SIGNATURES = {
+    "Intercom": ["intercom.io", "intercomcdn.com"],
+    "Drift": ["drift.com"],
+    "Tawk.to": ["tawk.to"],
+    "Crisp": ["crisp.chat"],
+}
+
+ANALYTICS_SIGNATURES = {
+    "Google Analytics": ["google-analytics.com", "googletagmanager.com", "gtag("],
+    "Facebook Pixel": ["connect.facebook.net", "fbevents.js"],
+}
+
+BOOKING_SIGNATURES = {
+    "Calendly": ["calendly.com"],
+}
+
+REVIEW_SIGNATURES = {
+    "Trustpilot": ["trustpilot.com"],
+    "Judge.me": ["judge.me"],
+}
+
+
+def _detect_any(html_lower, signature_map):
+    return any(
+        needle in html_lower
+        for needles in signature_map.values()
+        for needle in needles
+    )
+
+
+def analyze_website(url):
+    """
+    Fetches a business's homepage once and checks for a handful of
+    factual, objective gaps — never a design/copy opinion. If
+    PAGESPEED_API_KEY is set, also pulls a real Google PageSpeed mobile
+    score (25,000 free requests/day per Google Cloud project — no
+    billing card required at this scale).
+    """
+    weak_points = []
+    pagespeed_score = None
+
+    try:
+        resp = requests.get(
+            url,
+            timeout=8,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; LeadFinderBot/1.0)"},
+        )
+        html = resp.text
+        html_lower = html.lower()
+
+        if not _detect_any(html_lower, EMAIL_AUTOMATION_SIGNATURES):
+            weak_points.append("No email automation tool detected")
+        if not _detect_any(html_lower, CHAT_SIGNATURES):
+            weak_points.append("No live chat widget detected")
+        if not _detect_any(html_lower, ANALYTICS_SIGNATURES):
+            weak_points.append("No analytics/tracking detected")
+        if not _detect_any(html_lower, BOOKING_SIGNATURES):
+            weak_points.append("No online booking tool detected")
+        if not _detect_any(html_lower, REVIEW_SIGNATURES):
+            weak_points.append("No review-widget tool detected")
+
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, "html.parser")
+
+            title = soup.title.string.strip() if soup.title and soup.title.string else ""
+            if not title:
+                weak_points.append("Missing page title (hurts SEO)")
+
+            meta_desc = soup.find("meta", attrs={"name": "description"})
+            if not meta_desc or not (meta_desc.get("content") or "").strip():
+                weak_points.append("Missing meta description (hurts SEO)")
+
+            if not soup.find("h1"):
+                weak_points.append("No H1 heading found (hurts SEO)")
+
+            images = soup.find_all("img")
+            if images:
+                with_alt = sum(1 for img in images if (img.get("alt") or "").strip())
+                if with_alt / len(images) < 0.5:
+                    weak_points.append("Most images missing alt text (SEO/accessibility)")
+        except Exception as parse_err:
+            print(f"  (HTML parsing skipped: {parse_err})")
+
+    except Exception as e:
+        weak_points.append("Could not load site to analyze")
+        print(f"  Website analysis failed for {url}: {e}")
+
+    pagespeed_key = os.environ.get("PAGESPEED_API_KEY")
+    if pagespeed_key:
+        try:
+            psi_resp = requests.get(
+                "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
+                params={"url": url, "key": pagespeed_key, "strategy": "mobile"},
+                timeout=20,
+            )
+            if psi_resp.status_code == 200:
+                score = (
+                    psi_resp.json()
+                    .get("lighthouseResult", {})
+                    .get("categories", {})
+                    .get("performance", {})
+                    .get("score")
+                )
+                if score is not None:
+                    pagespeed_score = round(score * 100)
+                    if pagespeed_score < 50:
+                        weak_points.append(f"Slow mobile site — PageSpeed score {pagespeed_score}/100")
+            else:
+                print(f"  PageSpeed check failed ({psi_resp.status_code}) for {url}")
+        except Exception as e:
+            print(f"  PageSpeed check errored for {url}: {e}")
+
+    return {"weak_points": weak_points, "pagespeed_score": pagespeed_score}
+
+
 # ─── STEP 4: RUN THE PIPELINE FOR ONE SPECIFIC CLIENT ───
 def find_leads_for_client(client_id, client_settings):
     cities = client_settings.get("cities", [])
@@ -290,6 +421,14 @@ def find_leads_for_client(client_id, client_settings):
             if not require_website and digital_status not in no_website_statuses:
                 continue
 
+            website_url = place.get("websiteUri", "")
+            weak_points_str = ""
+            pagespeed_score = ""
+            if digital_status == "Has a website" and website_url:
+                analysis = analyze_website(website_url)
+                weak_points_str = "; ".join(analysis["weak_points"]) if analysis["weak_points"] else "No obvious gaps detected"
+                pagespeed_score = analysis["pagespeed_score"] if analysis["pagespeed_score"] is not None else ""
+
             all_leads.append({
                 "Search Query": query,
                 "Business Name": name,
@@ -299,7 +438,9 @@ def find_leads_for_client(client_id, client_settings):
                 "Review Count": place.get("userRatingCount", ""),
                 "Digital Status": digital_status,
                 "Suggested Pitch": pitch,
-                "Website (if any)": place.get("websiteUri", ""),
+                "Website (if any)": website_url,
+                "Weak Points": weak_points_str,
+                "PageSpeed Score (mobile)": pagespeed_score,
             })
             new_keys.add(key)
 
