@@ -123,6 +123,7 @@ exports.handler = async function (event) {
     daily_lead_cap: Math.min(parseInt(clientData.daily_lead_cap, 10) || 20, 20),
     min_reviews: parseInt(clientData.min_reviews, 10) || 40,
     require_website: !!clientData.require_website, // false = show only businesses without a proper website
+    require_ecommerce_platform: !!clientData.require_ecommerce_platform, // true = only businesses with a detected online store
     active: false, // stays off until Razorpay confirms payment (see razorpay-webhook.js)
   };
 

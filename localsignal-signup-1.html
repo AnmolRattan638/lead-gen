@@ -502,6 +502,15 @@
               </span>
             </label>
           </div>
+          <div class="form-row" style="display:flex;align-items:center;gap:0.5rem">
+            <input id="require-ecommerce" type="checkbox" style="width:auto" />
+            <label for="require-ecommerce" style="margin:0">
+              Only businesses that already run an online store
+              <span style="display:block;font-size:0.8rem;color:var(--muted, #888);font-weight:400">
+                For pitches aimed at existing Shopify/WooCommerce/etc. store owners. Overrides the website setting above.
+              </span>
+            </label>
+          </div>
         </fieldset>
 
         <div id="status" class="status" style="display:none"></div>
@@ -675,6 +684,7 @@
         daily_lead_cap: parseInt(leadCap.value, 10) || 20,
         min_reviews: parseInt(document.getElementById('reviews')?.value, 10) || 40,
         require_website: !!document.getElementById('show-with-website')?.checked,
+        require_ecommerce_platform: !!document.getElementById('require-ecommerce')?.checked,
       };
 
       if (submitBtn) submitBtn.disabled = true;

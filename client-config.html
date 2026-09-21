@@ -220,6 +220,16 @@
 </div>
 <input class="mt-1" id="requireWebsite" type="checkbox"/>
 </div>
+<!-- Field 6c: E-commerce Platform Preference -->
+<div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
+<div class="space-y-1 flex-1">
+<label class="font-title-md text-title-md text-on-surface" for="requireEcommerce">Only businesses with an online store</label>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+        For pitches aimed at existing Shopify/WooCommerce store owners. Overrides the website setting above.
+      </p>
+</div>
+<input class="mt-1" id="requireEcommerce" type="checkbox"/>
+</div>
 <!-- Field 7: Active Toggle -->
 <div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
 <div class="space-y-1 flex-1">
@@ -306,6 +316,7 @@
     const btnIncLimit = document.getElementById("btnIncLimit");
     const minReviewsInput = document.getElementById("minReviews");
     const requireWebsiteInput = document.getElementById("requireWebsite");
+    const requireEcommerceInput = document.getElementById("requireEcommerce");
     const pipelineToggle = document.getElementById("pipelineToggle");
     const toggleDot = document.getElementById("toggleDot");
     const clientTokenBadge = document.getElementById("clientTokenBadge");
@@ -510,6 +521,7 @@
       limitDisplay.textContent = cap;
       minReviewsInput.value = client.min_reviews != null ? client.min_reviews : 0;
       requireWebsiteInput.checked = !!client.require_website;
+      requireEcommerceInput.checked = !!client.require_ecommerce_platform;
 
       pipelineToggle.checked = !!client.active;
       if (pipelineToggle.checked) {
@@ -601,6 +613,7 @@
         daily_lead_cap: Math.min(parseInt(leadLimitRange.value, 10) || 20, 20),
         min_reviews: parseInt(minReviewsInput.value, 10) || 0,
         require_website: requireWebsiteInput.checked,
+        require_ecommerce_platform: requireEcommerceInput.checked,
         active: pipelineToggle.checked
       };
 

@@ -263,6 +263,26 @@ REVIEW_SIGNATURES = {
     "Judge.me": ["judge.me"],
 }
 
+# Platform fingerprints — checked on the same fetch as everything else
+# above, so detecting these costs nothing extra. Order matters: checked
+# roughly most-common-first so the first match wins for platforms that
+# might share generic signals.
+ECOMMERCE_PLATFORM_SIGNATURES = {
+    "Shopify": ["cdn.shopify.com", "myshopify.com", "shopify.theme"],
+    "WooCommerce": ["woocommerce", "wp-content/plugins/woocommerce"],
+    "BigCommerce": ["cdn11.bigcommerce.com", "bigcommerce.com"],
+    "Magento": ["mage-cache-storage", "/skin/frontend/", "magento"],
+    "Wix Stores": ["wixstores", "wix-code"],
+    "Squarespace Commerce": ["squarespace-commerce"],
+}
+
+
+def _detect_platform(html_lower):
+    for platform_name, needles in ECOMMERCE_PLATFORM_SIGNATURES.items():
+        if any(needle in html_lower for needle in needles):
+            return platform_name
+    return None
+
 
 def _detect_any(html_lower, signature_map):
     return any(
@@ -282,6 +302,7 @@ def analyze_website(url):
     """
     weak_points = []
     pagespeed_score = None
+    ecommerce_platform = None
 
     try:
         resp = requests.get(
@@ -291,6 +312,8 @@ def analyze_website(url):
         )
         html = resp.text
         html_lower = html.lower()
+
+        ecommerce_platform = _detect_platform(html_lower)
 
         if not _detect_any(html_lower, EMAIL_AUTOMATION_SIGNATURES):
             weak_points.append("No email automation tool detected")
@@ -355,7 +378,11 @@ def analyze_website(url):
         except Exception as e:
             print(f"  PageSpeed check errored for {url}: {e}")
 
-    return {"weak_points": weak_points, "pagespeed_score": pagespeed_score}
+    return {
+        "weak_points": weak_points,
+        "pagespeed_score": pagespeed_score,
+        "ecommerce_platform": ecommerce_platform,
+    }
 
 
 # ─── STEP 4: RUN THE PIPELINE FOR ONE SPECIFIC CLIENT ───
@@ -413,21 +440,35 @@ def find_leads_for_client(client_id, client_settings):
             digital_status, pitch = check_digital_presence(place)
 
             # ── Filter by the client's website preference (set at signup
-            # or changed later in client-config.html) ──
+            # or changed later in client-config.html). require_ecommerce
+            # implies require_website — you can't have an online store
+            # without a real website, so checking "online store only"
+            # automatically restricts to "Has a website" leads too. ──
             require_website = client_settings.get("require_website", False)
+            require_ecommerce = client_settings.get("require_ecommerce_platform", False)
+            effective_require_website = require_website or require_ecommerce
             no_website_statuses = ("No website", "Social media only")
-            if require_website and digital_status != "Has a website":
+            if effective_require_website and digital_status != "Has a website":
                 continue
-            if not require_website and digital_status not in no_website_statuses:
+            if not effective_require_website and digital_status not in no_website_statuses:
                 continue
 
             website_url = place.get("websiteUri", "")
             weak_points_str = ""
             pagespeed_score = ""
+            ecommerce_platform = None
             if digital_status == "Has a website" and website_url:
                 analysis = analyze_website(website_url)
                 weak_points_str = "; ".join(analysis["weak_points"]) if analysis["weak_points"] else "No obvious gaps detected"
                 pagespeed_score = analysis["pagespeed_score"] if analysis["pagespeed_score"] is not None else ""
+                ecommerce_platform = analysis.get("ecommerce_platform")
+
+            # A client who specifically wants online-store businesses
+            # skips this lead entirely if no known platform was detected
+            # on the fetched page — same "fail open, don't guess" spirit
+            # as the rest of this scanner.
+            if require_ecommerce and not ecommerce_platform:
+                continue
 
             all_leads.append({
                 "Search Query": query,
@@ -439,6 +480,7 @@ def find_leads_for_client(client_id, client_settings):
                 "Digital Status": digital_status,
                 "Suggested Pitch": pitch,
                 "Website (if any)": website_url,
+                "E-commerce Platform": ecommerce_platform or "",
                 "Weak Points": weak_points_str,
                 "PageSpeed Score (mobile)": pagespeed_score,
             })
