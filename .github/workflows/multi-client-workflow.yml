@@ -32,6 +32,7 @@ jobs:
       - name: Run lead finder for each active client
         env:
           PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           BREVO_USERNAME: ${{ secrets.BREVO_USERNAME }}
           BREVO_PASSWORD: ${{ secrets.BREVO_PASSWORD }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}

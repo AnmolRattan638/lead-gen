@@ -31,6 +31,11 @@ on:
         required: false
         type: boolean
         default: false
+      require_ecommerce:
+        description: 'Only businesses running an online store (Shopify/WooCommerce/etc), including pure online-only stores via Brave Search'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-demo:
@@ -50,12 +55,14 @@ jobs:
       - name: Run demo search
         env:
           PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           DEMO_ID: demo_${{ inputs.demo_label }}
           DEMO_CITY: ${{ inputs.city }}
           DEMO_CATEGORIES: ${{ inputs.categories }}
           DEMO_LEAD_CAP: ${{ inputs.lead_cap }}
           DEMO_MIN_REVIEWS: ${{ inputs.min_reviews }}
           DEMO_REQUIRE_WEBSITE: ${{ inputs.require_website }}
+          DEMO_REQUIRE_ECOMMERCE: ${{ inputs.require_ecommerce }}
         run: python3 run_demo_search.py
 
       - name: Upload results

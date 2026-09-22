@@ -30,6 +30,7 @@ from email.mime.application import MIMEApplication
 
 # ─── SHARED API KEYS (yours — same across all clients) ───
 API_KEY = os.environ.get("PLACES_API_KEY")
+BRAVE_API_KEY = os.environ.get("BRAVE_API_KEY")
 BREVO_HOST = "smtp-relay.brevo.com"
 BREVO_PORT = 587
 BREVO_USERNAME = os.environ.get("BREVO_USERNAME")
@@ -385,6 +386,151 @@ def analyze_website(url):
     }
 
 
+# ─── STEP 3c: PURE ONLINE-ONLY STORE DISCOVERY (Brave Search) ───
+# Google Places structurally cannot see online-only businesses — no
+# physical address, nothing to index. This uses Brave's Search API
+# (free tier: ~1,000 queries/month, no card required) to find candidate
+# store URLs via search, then runs them through the SAME analyze_website()
+# scanner already used above to confirm the platform and pull weak-points
+# data — no separate/duplicate detection logic needed.
+def search_online_stores_via_brave(niche, max_results=10):
+    if not BRAVE_API_KEY:
+        return []
+
+    queries = [
+        f'site:myshopify.com "{niche}"',
+        f'"{niche}" "powered by woocommerce"',
+    ]
+
+    urls = []
+    seen_domains = set()
+
+    for q in queries:
+        try:
+            resp = requests.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                headers={
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip",
+                    "X-Subscription-Token": BRAVE_API_KEY,
+                },
+                params={"q": q, "count": max_results},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                print(f"  Brave search failed ({resp.status_code}) for query: {q}")
+                continue
+
+            results = resp.json().get("web", {}).get("results", [])
+            for r in results:
+                url = r.get("url", "")
+                if not url:
+                    continue
+                domain = url.split("/")[2] if "//" in url else url
+                if domain in seen_domains:
+                    continue
+                seen_domains.add(domain)
+                urls.append(url)
+        except Exception as e:
+            print(f"  Brave search errored for query '{q}': {e}")
+
+    return urls[:max_results]
+
+
+def _guess_business_name(html, url):
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
+        if soup.title and soup.title.string:
+            # Titles are often "Brand Name – Tagline" or "Brand | Shop" —
+            # take the first segment as the best guess at the actual name.
+            raw = soup.title.string.strip()
+            for sep in ["–", "-", "|", "—"]:
+                if sep in raw:
+                    raw = raw.split(sep)[0].strip()
+                    break
+            if raw:
+                return raw
+    except Exception:
+        pass
+    # Fall back to the domain itself if the title didn't give anything usable
+    try:
+        return url.split("//")[1].split("/")[0].replace("www.", "")
+    except Exception:
+        return url
+
+
+def _extract_email(html):
+    match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", html)
+    return match.group(0) if match else ""
+
+
+def find_online_only_leads(client_id, niches, remaining_cap, seen, new_keys):
+    """
+    Separate discovery pass for clients who specifically want online-only
+    stores (require_ecommerce_platform=True) — Places can't find these at
+    all, so this is the only path that surfaces them. Reuses the same
+    dedup (seen/new_keys) and remaining_cap accounting as the main loop.
+    """
+    if not BRAVE_API_KEY:
+        print(f"[{client_id}] BRAVE_API_KEY not set — skipping online-only store discovery.")
+        return []
+
+    leads = []
+    for niche in niches:
+        if len(leads) >= remaining_cap:
+            break
+
+        print(f"[{client_id}] Searching online-only stores for: {niche}")
+        candidate_urls = search_online_stores_via_brave(niche)
+
+        for url in candidate_urls:
+            if len(leads) >= remaining_cap:
+                break
+
+            key = make_lead_key(url, "online")
+            if key in seen or key in new_keys:
+                continue
+
+            try:
+                resp = requests.get(
+                    url, timeout=8,
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; LeadFinderBot/1.0)"},
+                )
+                html = resp.text
+            except Exception as e:
+                print(f"  Could not fetch {url}: {e}")
+                continue
+
+            analysis = analyze_website(url)
+            platform = analysis.get("ecommerce_platform")
+            if not platform:
+                continue  # Brave's keyword search isn't perfectly precise — confirm with the real scanner before counting it
+
+            name = _guess_business_name(html, url)
+            email = _extract_email(html)
+            weak_points_str = "; ".join(analysis["weak_points"]) if analysis["weak_points"] else "No obvious gaps detected"
+            pagespeed_score = analysis["pagespeed_score"] if analysis["pagespeed_score"] is not None else ""
+
+            leads.append({
+                "Search Query": f"{niche} (online-only)",
+                "Business Name": name,
+                "Address": "Online only",
+                "Phone": email,
+                "Rating": "",
+                "Review Count": "",
+                "Digital Status": "Has a website",
+                "Suggested Pitch": f"Runs a {platform} store — {weak_points_str.split(';')[0] if weak_points_str else 'no obvious gaps detected'}",
+                "Website (if any)": url,
+                "E-commerce Platform": platform,
+                "Weak Points": weak_points_str,
+                "PageSpeed Score (mobile)": pagespeed_score,
+            })
+            new_keys.add(key)
+
+    return leads
+
+
 # ─── STEP 4: RUN THE PIPELINE FOR ONE SPECIFIC CLIENT ───
 def find_leads_for_client(client_id, client_settings):
     cities = client_settings.get("cities", [])
@@ -491,6 +637,21 @@ def find_leads_for_client(client_id, client_settings):
         save_seen_businesses(seen, client_id)
         print(f"[{client_id}] Added {len(new_keys)} new businesses "
               f"(total tracked: {len(seen)}).")
+
+    # ── Online-only store discovery (Brave Search) ──
+    # Only runs for clients who specifically want online-store businesses,
+    # and only for whatever daily allowance the Places search didn't use.
+    if client_settings.get("require_ecommerce_platform", False):
+        remaining_after_places = remaining_cap - len(all_leads)
+        if remaining_after_places > 0:
+            online_leads = find_online_only_leads(
+                client_id, categories, remaining_after_places, seen, new_keys
+            )
+            if online_leads:
+                all_leads.extend(online_leads)
+                seen.update(new_keys)
+                save_seen_businesses(seen, client_id)
+                print(f"[{client_id}] Added {len(online_leads)} online-only store leads.")
 
     # Update today's usage total so the NEXT run today (if any) respects
     # what's already been spent, regardless of how many leads passed filters.
