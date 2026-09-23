@@ -437,6 +437,64 @@ def search_online_stores_via_brave(niche, max_results=10):
     return urls[:max_results]
 
 
+STOPWORDS = {"and", "the", "for", "with", "a", "an", "of", "in", "on", "to", "store", "shop", "shops", "stores"}
+
+JUNK_SUBDOMAIN_PATTERNS = ["test", "staging", "-dev", "dev.", "demo", "sandbox", "checkout-", "admin."]
+
+SHOPIFY_PLACEHOLDER_SIGNATURES = [
+    "opening soon", "this shop is currently unavailable", "enter using password",
+    "this store is unavailable", "coming soon", "shopify.com/on-boarding",
+]
+
+
+def _niche_keywords(niche, max_keywords=2):
+    words = [w.strip(",.").lower() for w in niche.split() if w.strip(",.").lower() not in STOPWORDS and len(w) > 2]
+    words.sort(key=len, reverse=True)  # longer words tend to be more distinctive
+    return words[:max_keywords] or [niche.strip().lower()]
+
+
+def search_shopify_via_crtsh(niche, max_candidates=30):
+    """
+    Free, no-key fallback for online-only store discovery — queries the
+    public Certificate Transparency log database directly. Unlike Brave,
+    this has NO native niche-awareness — it only matches keywords against
+    the domain name itself, which is why find_online_only_leads() below
+    adds an extra content-relevance check for anything found this way.
+
+    crt.sh is known to be slow/overloaded at times, so this retries once
+    on failure rather than giving up immediately.
+    """
+    keywords = _niche_keywords(niche)
+    candidates = set()
+
+    for kw in keywords:
+        if len(candidates) >= max_candidates:
+            break
+
+        url = f"https://crt.sh/?q=%25{kw}%25.myshopify.com&output=json"
+        for attempt in range(2):
+            try:
+                resp = requests.get(
+                    url, timeout=15,
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; LeadFinderBot/1.0)"},
+                )
+                if resp.status_code == 200 and resp.text.strip():
+                    records = resp.json()
+                    for rec in records:
+                        for name in rec.get("name_value", "").split("\n"):
+                            name = name.strip().lower().lstrip("*.")
+                            if not name.endswith(".myshopify.com"):
+                                continue
+                            if any(junk in name for junk in JUNK_SUBDOMAIN_PATTERNS):
+                                continue
+                            candidates.add(name)
+                    break  # got a usable response, no need to retry this keyword
+            except Exception as e:
+                print(f"  crt.sh query failed (attempt {attempt + 1}) for '{kw}': {e}")
+
+    return [f"https://{d}" for d in list(candidates)[:max_candidates]]
+
+
 def _guess_business_name(html, url):
     try:
         from bs4 import BeautifulSoup
@@ -471,18 +529,26 @@ def find_online_only_leads(client_id, niches, remaining_cap, seen, new_keys):
     stores (require_ecommerce_platform=True) — Places can't find these at
     all, so this is the only path that surfaces them. Reuses the same
     dedup (seen/new_keys) and remaining_cap accounting as the main loop.
-    """
-    if not BRAVE_API_KEY:
-        print(f"[{client_id}] BRAVE_API_KEY not set — skipping online-only store discovery.")
-        return []
 
+    Uses Brave Search if BRAVE_API_KEY is set (precise, actually niche-
+    aware). Otherwise falls back to crt.sh (free, no key, no card) — since
+    that path can't search by niche natively, extra filters below compensate:
+    junk-subdomain exclusion, placeholder/inactive-page detection, and a
+    real content-relevance check before anything counts as a lead.
+    """
     leads = []
+    using_brave = bool(BRAVE_API_KEY)
+    backend_name = "Brave Search" if using_brave else "crt.sh (free fallback)"
+
     for niche in niches:
         if len(leads) >= remaining_cap:
             break
 
-        print(f"[{client_id}] Searching online-only stores for: {niche}")
-        candidate_urls = search_online_stores_via_brave(niche)
+        print(f"[{client_id}] Searching online-only stores via {backend_name} for: {niche}")
+        candidate_urls = (
+            search_online_stores_via_brave(niche) if using_brave
+            else search_shopify_via_crtsh(niche)
+        )
 
         for url in candidate_urls:
             if len(leads) >= remaining_cap:
@@ -498,14 +564,32 @@ def find_online_only_leads(client_id, niches, remaining_cap, seen, new_keys):
                     headers={"User-Agent": "Mozilla/5.0 (compatible; LeadFinderBot/1.0)"},
                 )
                 html = resp.text
+                html_lower = html.lower()
             except Exception as e:
                 print(f"  Could not fetch {url}: {e}")
                 continue
 
+            # Filter: skip placeholder/inactive stores — a real domain that
+            # isn't actually a live business worth pitching.
+            if any(sig in html_lower for sig in SHOPIFY_PLACEHOLDER_SIGNATURES):
+                continue
+
+            # Filter: crt.sh matched on the DOMAIN NAME only, not real
+            # content — confirm the niche genuinely appears on the page
+            # before trusting it. Brave already did real niche search, so
+            # this extra check is skipped for that path (redundant there).
+            if not using_brave:
+                niche_words = _niche_keywords(niche, max_keywords=3)
+                if not any(w in html_lower for w in niche_words):
+                    continue
+
+            # Filter: confirm the platform for real via the same scanner
+            # used everywhere else, rather than trusting the discovery
+            # method's guess (myshopify.com domain, Brave's search match).
             analysis = analyze_website(url)
             platform = analysis.get("ecommerce_platform")
             if not platform:
-                continue  # Brave's keyword search isn't perfectly precise — confirm with the real scanner before counting it
+                continue
 
             name = _guess_business_name(html, url)
             email = _extract_email(html)
