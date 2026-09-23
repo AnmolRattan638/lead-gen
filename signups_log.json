@@ -23,5 +23,30 @@
       "India"
     ],
     "timestamp": "2026-09-17T12:31:02.101Z"
+  },
+  {
+    "event": "exit",
+    "client_id": "client_6801",
+    "name": "Soul",
+    "email": "meaningless1727@gmail.com",
+    "cities": [
+      "hyderabad",
+      "Telangana",
+      "India"
+    ],
+    "timestamp": "2026-09-23T05:22:09.251476+00:00"
+  },
+  {
+    "event": "exit",
+    "client_id": "client_5141",
+    "name": "Anmol Rattan",
+    "email": "anmolrattan852@gmail.com",
+    "cities": [
+      "Una",
+      "Nangal",
+      "Chicago",
+      "Washington"
+    ],
+    "timestamp": "2026-09-23T05:22:09.251596+00:00"
   }
 ]
