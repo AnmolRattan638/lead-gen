@@ -1,0 +1,33 @@
+name: Send Renewal Reminders
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # 10:30 AM IST daily — after the main lead-finder run
+  workflow_dispatch: {}  # allows a manual "Run workflow" click for testing
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Send renewal reminders
+        env:
+          BREVO_USERNAME: ${{ secrets.BREVO_USERNAME }}
+          BREVO_PASSWORD: ${{ secrets.BREVO_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+        run: python3 send_renewal_reminders.py
+
+      - name: Commit updated reminder log
+        run: |
+          git config user.name "lead-finder-bot"
+          git config user.email "actions@github.com"
+          git add reminder_log.json
+          git diff --cached --quiet || git commit -m "Update renewal reminder log [skip netlify]"
+          git push
