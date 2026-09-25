@@ -127,6 +127,7 @@ exports.handler = async function (event) {
     min_reviews: parseInt(body.min_reviews, 10) || 0,
     require_website: !!body.require_website,
     require_ecommerce_platform: !!body.require_ecommerce_platform,
+    recently_opened_only: !!body.recently_opened_only,
     active: !!body.active,
   };
 

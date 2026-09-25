@@ -230,6 +230,16 @@
 </div>
 <input class="mt-1" id="requireEcommerce" type="checkbox"/>
 </div>
+<!-- Field 6d: Recently Opened Only -->
+<div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
+<div class="space-y-1 flex-1">
+<label class="font-title-md text-title-md text-on-surface" for="recentlyOpenedOnly">Only recently opened businesses</label>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+        Flags brand-new listings (few/no reviews yet, never seen in a previous search) instead of your usual minimum-reviews filter.
+      </p>
+</div>
+<input class="mt-1" id="recentlyOpenedOnly" type="checkbox"/>
+</div>
 <!-- Field 7: Active Toggle -->
 <div class="flex items-start justify-between p-space-md rounded-lg bg-surface-container-low gap-3">
 <div class="space-y-1 flex-1">
@@ -317,6 +327,7 @@
     const minReviewsInput = document.getElementById("minReviews");
     const requireWebsiteInput = document.getElementById("requireWebsite");
     const requireEcommerceInput = document.getElementById("requireEcommerce");
+    const recentlyOpenedOnlyInput = document.getElementById("recentlyOpenedOnly");
     const pipelineToggle = document.getElementById("pipelineToggle");
     const toggleDot = document.getElementById("toggleDot");
     const clientTokenBadge = document.getElementById("clientTokenBadge");
@@ -522,6 +533,7 @@
       minReviewsInput.value = client.min_reviews != null ? client.min_reviews : 0;
       requireWebsiteInput.checked = !!client.require_website;
       requireEcommerceInput.checked = !!client.require_ecommerce_platform;
+      recentlyOpenedOnlyInput.checked = !!client.recently_opened_only;
 
       pipelineToggle.checked = !!client.active;
       if (pipelineToggle.checked) {
@@ -614,6 +626,7 @@
         min_reviews: parseInt(minReviewsInput.value, 10) || 0,
         require_website: requireWebsiteInput.checked,
         require_ecommerce_platform: requireEcommerceInput.checked,
+        recently_opened_only: recentlyOpenedOnlyInput.checked,
         active: pipelineToggle.checked
       };
 

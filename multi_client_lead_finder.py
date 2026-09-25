@@ -100,6 +100,17 @@ def get_client_daily_usage_file(client_id):
     return f"client_data/{client_id}/daily_usage.json"
 
 
+def get_client_new_business_seen_file(client_id):
+    # Deliberately separate from get_client_seen_file()'s history. The
+    # normal seen file only ever contains businesses that passed the
+    # standard min_reviews bar — a brand-new business never appears
+    # there, so it can't be reused to detect "first time we've ever
+    # seen this listing" for the recently-opened scanner. Keeping a
+    # dedicated file also means turning recently_opened_only on/off
+    # never pollutes (or is polluted by) the client's normal lead history.
+    return f"client_data/{client_id}/seen_new_businesses.csv"
+
+
 def ensure_client_folder_exists(client_id):
     os.makedirs(f"client_data/{client_id}", exist_ok=True)
 
@@ -213,6 +224,48 @@ def passes_size_filter(place, min_reviews):
         return False
 
     return True
+
+
+# ─── STEP 2b: "RECENTLY OPENED" FILTER (for recently_opened_only clients) ───
+# Google Places has no official "date opened" field, so this scanner uses
+# two signals together, per the intended design:
+#   1. PRIMARY — diffing: is this the first time our pipeline has ever
+#      seen this exact business, in any search, for this client? A
+#      business that's brand new to every one of our past scans is a
+#      much stronger "recently opened" signal than review count alone
+#      (an established business could just be new to THIS particular
+#      city/category combo).
+#   2. SECONDARY — low review count as a confidence booster on top of
+#      the diffing signal, since a business that's actually new to the
+#      world (not just new to our search) will also have few or no
+#      reviews yet.
+# Note this intentionally skips the photo-count and price-level checks
+# in passes_size_filter() — brand-new listings often haven't had time
+# to accumulate photos or a price-level signal yet, so requiring those
+# would filter out exactly the businesses this scanner exists to find.
+RECENTLY_OPENED_MAX_REVIEWS = 15   # ceiling to even be considered a candidate
+RECENTLY_OPENED_HIGH_CONFIDENCE_MAX = 5   # at/under this review count => "High"
+
+
+def passes_recently_opened_filter(place):
+    review_count = place.get("userRatingCount", 0)
+    if review_count > RECENTLY_OPENED_MAX_REVIEWS:
+        return False
+
+    has_phone = bool(place.get("nationalPhoneNumber", "").strip())
+    has_website = bool(place.get("websiteUri", "").strip())
+    if not has_phone and not has_website:
+        return False  # still want SOME sign of a real, findable business
+
+    return True
+
+
+def recently_opened_confidence(review_count):
+    try:
+        review_count = int(review_count or 0)
+    except (ValueError, TypeError):
+        review_count = 0
+    return "High" if review_count <= RECENTLY_OPENED_HIGH_CONFIDENCE_MAX else "Medium"
 
 
 # ─── STEP 3: DIGITAL PRESENCE CHECK (shared logic) ───
@@ -744,6 +797,131 @@ def find_leads_for_client(client_id, client_settings):
     return all_leads
 
 
+# ─── STEP 4b: RUN THE "RECENTLY OPENED ONLY" PIPELINE FOR ONE CLIENT ───
+# Parallel to find_leads_for_client(), same shape (registry settings in,
+# daily cap respected, same helper functions reused) — kept as a separate
+# function rather than branching deep inside the normal one, the same way
+# find_online_only_leads() is kept separate for require_ecommerce_platform.
+# A client is in ONE mode or the other for a given run: recently_opened_only
+# replaces the standard min_reviews search rather than layering on top of
+# it, since the two are looking for opposite ends of the review-count range.
+def find_recently_opened_leads_for_client(client_id, client_settings):
+    cities = client_settings.get("cities", [])
+    categories = client_settings.get("categories", [])
+    daily_cap = client_settings.get("daily_lead_cap", 20)
+
+    if not cities or not categories:
+        print(f"ERROR: client '{client_id}' has no cities/categories configured.")
+        return []
+
+    leads_used_today = load_daily_usage(client_id)
+    remaining_cap = daily_cap - leads_used_today
+    if remaining_cap <= 0:
+        print(f"[{client_id}] Daily cap of {daily_cap} already reached today "
+              f"({leads_used_today} used) — skipping run, no API calls made.")
+        return []
+    print(f"[{client_id}] (recently-opened mode) {leads_used_today}/{daily_cap} "
+          f"leads used today — {remaining_cap} remaining for this run.")
+
+    search_queries = [
+        f"{category} in {city}" for city in cities for category in categories
+    ]
+
+    # Dedicated seen-file — see get_client_new_business_seen_file() for why
+    # this can't share the normal seen_businesses.csv.
+    seen_file = get_client_new_business_seen_file(client_id)
+    seen = set()
+    if os.path.exists(seen_file):
+        with open(seen_file, "r", newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                seen.add(row["key"])
+    print(f"[{client_id}] Loaded {len(seen)} previously-seen businesses "
+          f"(recently-opened tracking).")
+
+    require_website = client_settings.get("require_website", False)
+    require_ecommerce = client_settings.get("require_ecommerce_platform", False)
+    effective_require_website = require_website or require_ecommerce
+    no_website_statuses = ("No website", "Social media only")
+
+    all_leads = []
+    new_keys = set()
+
+    for query in search_queries:
+        if len(all_leads) >= remaining_cap:
+            print(f"[{client_id}] Reached remaining daily allowance ({remaining_cap}) — stopping search.")
+            break
+
+        print(f"[{client_id}] Searching (recently-opened): {query}")
+        places = search_places(query, API_KEY)
+
+        for place in places:
+            if len(all_leads) >= remaining_cap:
+                break
+            if not passes_recently_opened_filter(place):
+                continue
+
+            name = place.get("displayName", {}).get("text", "Unknown")
+            address = place.get("formattedAddress", "")
+            key = make_lead_key(name, address)
+
+            # The diffing check: if we've EVER returned this business from
+            # this scan before, it's not a new listing — skip it, no
+            # matter how few reviews it currently has.
+            if key in seen or key in new_keys:
+                continue
+
+            digital_status, pitch = check_digital_presence(place)
+            if effective_require_website and digital_status != "Has a website":
+                continue
+            if not effective_require_website and digital_status not in no_website_statuses:
+                continue
+
+            website_url = place.get("websiteUri", "")
+            weak_points_str = ""
+            pagespeed_score = ""
+            ecommerce_platform = None
+            if digital_status == "Has a website" and website_url:
+                analysis = analyze_website(website_url)
+                weak_points_str = "; ".join(analysis["weak_points"]) if analysis["weak_points"] else "No obvious gaps detected"
+                pagespeed_score = analysis["pagespeed_score"] if analysis["pagespeed_score"] is not None else ""
+                ecommerce_platform = analysis.get("ecommerce_platform")
+
+            if require_ecommerce and not ecommerce_platform:
+                continue
+
+            review_count = place.get("userRatingCount", "")
+            all_leads.append({
+                "Search Query": query,
+                "Business Name": name,
+                "Address": address,
+                "Phone": place.get("nationalPhoneNumber", ""),
+                "Rating": place.get("rating", ""),
+                "Review Count": review_count,
+                "Recently Opened Confidence": recently_opened_confidence(review_count),
+                "Digital Status": digital_status,
+                "Suggested Pitch": pitch,
+                "Website (if any)": website_url,
+                "E-commerce Platform": ecommerce_platform or "",
+                "Weak Points": weak_points_str,
+                "PageSpeed Score (mobile)": pagespeed_score,
+            })
+            new_keys.add(key)
+
+    if new_keys:
+        seen.update(new_keys)
+        ensure_client_folder_exists(client_id)
+        with open(seen_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["key"])
+            for key in sorted(seen):
+                writer.writerow([key])
+        print(f"[{client_id}] Added {len(new_keys)} newly-opened businesses "
+              f"(total tracked: {len(seen)}).")
+
+    save_daily_usage(client_id, leads_used_today + len(all_leads))
+    return all_leads
+
+
 # ─── STEP 5: SAVE TO CLIENT'S OWN WELL-FORMATTED SPREADSHEET ───
 def save_client_leads(leads, client_id):
     if not leads:
@@ -763,6 +941,9 @@ def save_client_leads(leads, client_id):
             reviews = int(lead.get("Review Count") or 0)
         except (ValueError, TypeError):
             reviews = 0
+        if "Recently Opened Confidence" in lead:
+            confidence_priority = 0 if lead.get("Recently Opened Confidence") == "High" else 1
+            return (confidence_priority, status_priority, -reviews)
         return (status_priority, -reviews)
 
     leads_sorted = sorted(leads, key=sort_key)
@@ -790,6 +971,7 @@ def save_client_leads(leads, client_id):
     # Color coding — green for "No website" (clearest pitch), yellow for
     # "Social media only" (softer pitch angle needed)
     status_col_index = headers.index("Digital Status") + 1 if "Digital Status" in headers else None
+    confidence_col_index = headers.index("Recently Opened Confidence") + 1 if "Recently Opened Confidence" in headers else None
     GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
     YELLOW = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
 
@@ -807,6 +989,14 @@ def save_client_leads(leads, client_id):
                 status_cell.fill = GREEN
             elif status_value == "Social media only":
                 status_cell.fill = YELLOW
+
+        if confidence_col_index:
+            confidence_value = lead.get("Recently Opened Confidence", "")
+            confidence_cell = ws.cell(row=row_num, column=confidence_col_index)
+            if confidence_value == "High":
+                confidence_cell.fill = GREEN
+            elif confidence_value == "Medium":
+                confidence_cell.fill = YELLOW
 
     # Column widths — wide for text-heavy fields, narrow for short ones,
     # so nothing looks cramped or runs off-screen on a phone.
@@ -879,6 +1069,9 @@ if __name__ == "__main__":
         sys.exit(1)  # error already printed above
 
     print(f"Running lead finder for client: {client_settings.get('name', client_id)}")
-    leads = find_leads_for_client(client_id, client_settings)
+    if client_settings.get("recently_opened_only", False):
+        leads = find_recently_opened_leads_for_client(client_id, client_settings)
+    else:
+        leads = find_leads_for_client(client_id, client_settings)
     filename = save_client_leads(leads, client_id)
     send_client_email(filename, len(leads), client_settings, client_id)
