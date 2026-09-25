@@ -703,44 +703,21 @@
           throw new Error(data.error || 'Signup failed');
         }
 
-        // Get a payment link ready, but don't force the redirect — some
-        // clients want to sign up now and pay later. Their client_id and
-        // settings are already saved at this point regardless of what
-        // they choose here; they just stay inactive until they pay.
-        try {
-          const payRes = await fetch('/.netlify/functions/create-payment-link', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ client_id: data.client_id, name, email })
-          });
-          const payData = await payRes.json();
-
-          if (payRes.ok && payData.payment_link) {
-            statusEl.className = 'status success';
-            statusEl.style.display = 'flex';
-            statusEl.innerHTML =
-              '<span>You’re set, ' + name.split(' ')[0] + '. Your Client ID is <strong>' + data.client_id + '</strong> — save this to look up or edit your settings later.' +
-              '<br><br>Your search is saved but won’t start until payment is complete.' +
-              '<br><br>' +
-              '<a href="' + payData.payment_link + '" class="submit-button" style="display:inline-block;text-decoration:none;margin-right:0.5rem">Pay now</a>' +
-              '<a href="client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email) + '" style="color:var(--primary)">Not now — I’ll pay later</a>' +
-              '</span>';
-          } else {
-            throw new Error('Payment link creation failed');
-          }
-        } catch (payErr) {
-          console.error('Payment link error:', payErr);
-          // Don't strand the user with nothing — their signup is already
-          // saved, so give them their ID and a way to check back later
-          // even though payment setup hit a snag.
-          statusEl.className = 'status error';
-          statusEl.style.display = 'flex';
-          statusEl.innerHTML =
-            '<span>Signup saved — your Client ID is <strong>' + data.client_id + '</strong> (save this).' +
-            '<br><br>We couldn’t set up payment right now. You can check your settings anytime here: ' +
-            '<a href="client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email) + '" style="color:var(--primary)">client-config.html</a>' +
-            '</span>';
-        }
+        // TEMPORARY: payment gateway (Dodo) is on hold pending KYC —
+        // taking payment manually via QR code in the meantime. Swap this
+        // block back to the create-payment-link call once a gateway is
+        // live again. Manual activation happens via the "Suspend or
+        // Reactivate Client" GitHub Action once payment is confirmed.
+        statusEl.className = 'status success';
+        statusEl.style.display = 'flex';
+        statusEl.innerHTML =
+          '<span>You’re set, ' + name.split(' ')[0] + '. Your Client ID is <strong>' + data.client_id + '</strong> — save this to look up or edit your settings later.' +
+          '<br><br>Your search is saved but won’t start until payment is complete.' +
+          '<br><br><strong>Scan to pay via UPI/PhonePe, then email your Client ID to anmolrattan852@gmail.com to activate your account:</strong>' +
+          '<br><br><img src="payment-qr.jpg" alt="Payment QR code" style="max-width:220px;width:100%;border-radius:8px" />' +
+          '<br><br>' +
+          '<a href="client-config.html?client_id=' + encodeURIComponent(data.client_id) + '&email=' + encodeURIComponent(email) + '" style="color:var(--primary)">Not now — I’ll pay later</a>' +
+          '</span>';
       } catch (err) {
         console.error('Signup submission error:', err);
         showStatus('error', 'Something went wrong setting up your search — please try again.');
