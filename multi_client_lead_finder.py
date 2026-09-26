@@ -183,7 +183,8 @@ def search_places(query, api_key):
             "places.displayName,places.formattedAddress,"
             "places.rating,places.userRatingCount,places.priceLevel,"
             "places.websiteUri,places.nationalPhoneNumber,"
-            "places.types,places.photos,places.regularOpeningHours"
+            "places.types,places.photos,places.regularOpeningHours,"
+            "places.reviews"
         )
     }
     body = {"textQuery": query}
@@ -265,22 +266,48 @@ REVIEW_SIGNATURES = {
 }
 
 # Platform fingerprints — checked on the same fetch as everything else
-# above, so detecting these costs nothing extra. Order matters: checked
-# roughly most-common-first so the first match wins for platforms that
-# might share generic signals.
+# above, so detecting these costs nothing extra. Each platform requires
+# BOTH a "base" hosting/framework signal AND a "confirm" cart/checkout
+# signal to count — a bare mention of "woocommerce" or "wix-code" often
+# just means a bundled plugin dependency or the general site builder,
+# not an actual live storefront. Requiring both cuts false positives
+# on ordinary business sites that aren't really selling anything online.
 ECOMMERCE_PLATFORM_SIGNATURES = {
-    "Shopify": ["cdn.shopify.com", "myshopify.com", "shopify.theme"],
-    "WooCommerce": ["woocommerce", "wp-content/plugins/woocommerce"],
-    "BigCommerce": ["cdn11.bigcommerce.com", "bigcommerce.com"],
-    "Magento": ["mage-cache-storage", "/skin/frontend/", "magento"],
-    "Wix Stores": ["wixstores", "wix-code"],
-    "Squarespace Commerce": ["squarespace-commerce"],
+    "Shopify": {
+        "base": ["cdn.shopify.com", "myshopify.com", "shopify.theme"],
+        "confirm": ["add-to-cart", "cart.js", "shopify-buy", "checkout.shopify.com", "/cart.js", "shopify_pay"],
+    },
+    "WooCommerce": {
+        "base": ["woocommerce", "wp-content/plugins/woocommerce"],
+        "confirm": ["add_to_cart", "woocommerce-cart", "single_add_to_cart_button", "?add-to-cart=", "wc-cart"],
+    },
+    "BigCommerce": {
+        "base": ["cdn11.bigcommerce.com", "bigcommerce.com"],
+        "confirm": ["add-to-cart", "/cart.php", "product-view", "bigcommerce/stencil"],
+    },
+    "Magento": {
+        "base": ["mage-cache-storage", "/skin/frontend/", "magento"],
+        "confirm": ["add-to-cart", "checkout/cart", "product-item", "mage-quickview"],
+    },
+    "Wix Stores": {
+        # "wix-code" removed — that's Wix's general dev platform (Velo),
+        # used on any custom Wix site regardless of e-commerce, and was
+        # the main source of false positives on ordinary Wix business sites.
+        "base": ["wixstores"],
+        "confirm": ["add-to-cart", "product-page", "wixcommerce", "wix-ecommerce"],
+    },
+    "Squarespace Commerce": {
+        "base": ["squarespace-commerce"],
+        "confirm": ["add-to-cart", "sqs-add-to-cart-button", "commerce-product"],
+    },
 }
 
 
 def _detect_platform(html_lower):
-    for platform_name, needles in ECOMMERCE_PLATFORM_SIGNATURES.items():
-        if any(needle in html_lower for needle in needles):
+    for platform_name, sigs in ECOMMERCE_PLATFORM_SIGNATURES.items():
+        has_base = any(needle in html_lower for needle in sigs["base"])
+        has_confirm = any(needle in html_lower for needle in sigs["confirm"])
+        if has_base and has_confirm:
             return platform_name
     return None
 

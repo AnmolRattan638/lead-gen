@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       categories:
-        description: 'Business categories, comma-separated (e.g. "hotels, restaurants")'
+        description: 'Business categories/niches, comma-separated. For normal search: "hotels, restaurants". For online-store-only search: use PRODUCT niches instead, e.g. "candles, skincare" — not business types.'
         required: true
         type: string
       lead_cap:
