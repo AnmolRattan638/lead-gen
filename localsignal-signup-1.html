@@ -713,10 +713,9 @@
           throw new Error(data.error || 'Signup failed');
         }
 
-        // TEMPORARY: payment gateway (Dodo) is on hold pending KYC —
-        // taking payment manually via QR code in the meantime. Swap this
-        // block back to the create-payment-link call once a gateway is
-        // live again. Manual activation happens via the "Suspend or
+        // TEMPORARY: payment is manual via QR code (Dodo Payments
+        // integration was tried and dropped — see git history if ever
+        // revisited). Manual activation happens via the "Suspend or
         // Reactivate Client" GitHub Action once payment is confirmed.
         statusEl.className = 'status success';
         statusEl.style.display = 'flex';
