@@ -1,4 +1,4 @@
 [build]
   functions = "netlify/functions"
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "GITHUB_REPO"
+  SECRETS_SCAN_OMIT_KEYS = "GITHUB_REPO,SITE_URL"

@@ -30,7 +30,7 @@
 //        DODO_PAYMENTS_API_KEY
 //        DODO_PAYMENTS_ENVIRONMENT = test_mode   (switch to live_mode when ready)
 //        DODO_PRODUCT_ID           = the product_id from step 2
-//        SITE_URL                  = e.g. https://client-signup-form.netlify.app
+//        SITE_URL                  = e.g. https://your-site-name.netlify.app
 // ============================================================
 
 const DodoPayments = require("dodopayments");
