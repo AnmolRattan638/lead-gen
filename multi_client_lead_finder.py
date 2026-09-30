@@ -23,7 +23,7 @@ import re
 import json
 import sys
 import smtplib
-from datetime import date
+from datetime import date, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
@@ -310,6 +310,57 @@ def _detect_platform(html_lower):
         if has_base and has_confirm:
             return platform_name
     return None
+
+
+# ─── RECENTLY-OPENED DETECTION ───
+# Google Places doesn't expose a "date opened" field, but review timestamps
+# are a reasonable proxy: a business with very few reviews, all of them
+# recent, likely hasn't been open long — and a brand-new business is
+# actively setting up every system it needs (website, socials, follow-up),
+# a genuinely different — often more receptive — moment to reach out than
+# a business that's operated the same way for years.
+#
+# Honest limitation: Places only returns up to 5 reviews per place, so for
+# a business with many reviews, "oldest of the 5 shown" reflects Google's
+# review-sorting, not the business's true age — that's why this only
+# fires when review count itself is also low.
+RECENTLY_OPENED_MAX_REVIEW_COUNT = 15
+RECENTLY_OPENED_MAX_AGE_DAYS = 180
+
+
+def detect_recently_opened(place):
+    review_count = place.get("userRatingCount", 0)
+
+    if review_count == 0:
+        return "Recently opened (no reviews yet)"
+
+    if review_count > RECENTLY_OPENED_MAX_REVIEW_COUNT:
+        return ""  # too many reviews for this heuristic to be meaningful
+
+    reviews = place.get("reviews", [])
+    if not reviews:
+        return ""
+
+    publish_times = []
+    for r in reviews:
+        pt = r.get("publishTime")
+        if pt:
+            try:
+                publish_times.append(datetime.fromisoformat(pt.replace("Z", "+00:00")))
+            except ValueError:
+                continue
+
+    if not publish_times:
+        return ""
+
+    oldest = min(publish_times)
+    age_days = (datetime.now(oldest.tzinfo) - oldest).days
+
+    if age_days <= RECENTLY_OPENED_MAX_AGE_DAYS:
+        months = max(1, age_days // 30)
+        return f"Recently opened (~{months} month{'s' if months != 1 else ''} ago, low review count)"
+
+    return ""
 
 
 def _detect_any(html_lower, signature_map):
@@ -727,6 +778,8 @@ def find_leads_for_client(client_id, client_settings):
             if require_ecommerce and not ecommerce_platform:
                 continue
 
+            recently_opened = detect_recently_opened(place)
+
             all_leads.append({
                 "Search Query": query,
                 "Business Name": name,
@@ -735,6 +788,7 @@ def find_leads_for_client(client_id, client_settings):
                 "Rating": place.get("rating", ""),
                 "Review Count": place.get("userRatingCount", ""),
                 "Digital Status": digital_status,
+                "Recently Opened": recently_opened,
                 "Suggested Pitch": pitch,
                 "Website (if any)": website_url,
                 "E-commerce Platform": ecommerce_platform or "",
