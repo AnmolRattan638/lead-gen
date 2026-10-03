@@ -71,5 +71,25 @@
     "require_website": false,
     "require_ecommerce_platform": false,
     "active": true
+  },
+  "client_5778": {
+    "name": "Apex Aesthetic Clinic",
+    "email": "dr.arora@apexaesthetics.com",
+    "cities": [
+      "Jaipur",
+      "Udaipur"
+    ],
+    "categories": [
+      "clinics",
+      "salons",
+      "gyms",
+      "restaurants",
+      "cafes"
+    ],
+    "daily_lead_cap": 5,
+    "min_reviews": 40,
+    "require_website": false,
+    "require_ecommerce_platform": false,
+    "active": true
   }
 }
