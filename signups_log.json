@@ -70,5 +70,16 @@
       "Udaipur"
     ],
     "timestamp": "2026-10-03T15:22:36.949Z"
+  },
+  {
+    "event": "entry",
+    "client_id": "client_5778",
+    "name": "Apex Aesthetic Clinic",
+    "email": "dr.arora@apexaesthetics.com",
+    "cities": [
+      "Jaipur",
+      "Udaipur"
+    ],
+    "timestamp": "2026-10-03T15:23:17.749Z"
   }
 ]
