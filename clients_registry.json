@@ -14,5 +14,22 @@
     "daily_lead_cap": 7,
     "min_reviews": 40,
     "active": false
+  },
+  "client_7327": {
+    "name": "Nikhil",
+    "email": "meneditor18@gmail.com",
+    "cities": [
+      "Delhi",
+      "Berampur"
+    ],
+    "categories": [
+      "Forien client",
+      "Indian clients"
+    ],
+    "daily_lead_cap": 5,
+    "min_reviews": 40,
+    "require_website": false,
+    "require_ecommerce_platform": false,
+    "active": false
   }
 }
