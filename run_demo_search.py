@@ -28,7 +28,11 @@ new label for a fully fresh run.
 
 import os
 
-from multi_client_lead_finder import find_leads_for_client, save_client_leads
+from multi_client_lead_finder import (
+    find_leads_for_client,
+    find_recently_opened_leads_for_client,
+    save_client_leads,
+)
 
 # ── Local fallback values — only used if the matching env var isn't set
 # (i.e. when running this manually rather than via GitHub Actions) ──
@@ -39,6 +43,7 @@ DEMO_LEAD_CAP = os.environ.get("DEMO_LEAD_CAP", "15")
 DEMO_MIN_REVIEWS = os.environ.get("DEMO_MIN_REVIEWS", "40")
 DEMO_REQUIRE_WEBSITE = os.environ.get("DEMO_REQUIRE_WEBSITE", "false").lower() == "true"
 DEMO_REQUIRE_ECOMMERCE = os.environ.get("DEMO_REQUIRE_ECOMMERCE", "false").lower() == "true"
+DEMO_RECENTLY_OPENED_ONLY = os.environ.get("DEMO_RECENTLY_OPENED_ONLY", "false").lower() == "true"
 DEMO_REQUIRE_LOGO_LEAD = os.environ.get("DEMO_REQUIRE_LOGO_LEAD", "false").lower() == "true"
 
 DEMO_SETTINGS = {
@@ -48,6 +53,7 @@ DEMO_SETTINGS = {
     "min_reviews": int(DEMO_MIN_REVIEWS),
     "require_website": DEMO_REQUIRE_WEBSITE,
     "require_ecommerce_platform": DEMO_REQUIRE_ECOMMERCE,
+    "recently_opened_only": DEMO_RECENTLY_OPENED_ONLY,
     "require_logo_design_lead": DEMO_REQUIRE_LOGO_LEAD,
 }
 # ──────────────────────────────────────────
@@ -55,7 +61,10 @@ DEMO_SETTINGS = {
 if __name__ == "__main__":
     print(f"Running demo search for '{DEMO_ID}'...")
     print(f"Cities: {DEMO_SETTINGS['cities']} | Categories: {DEMO_SETTINGS['categories']}")
-    leads = find_leads_for_client(DEMO_ID, DEMO_SETTINGS)
+    if DEMO_SETTINGS.get("recently_opened_only"):
+        leads = find_recently_opened_leads_for_client(DEMO_ID, DEMO_SETTINGS)
+    else:
+        leads = find_leads_for_client(DEMO_ID, DEMO_SETTINGS)
 
     if not leads:
         print("No leads found — try loosening min_reviews or adding more cities/categories.")

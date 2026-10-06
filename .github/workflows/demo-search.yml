@@ -41,6 +41,11 @@ on:
         required: false
         type: boolean
         default: false
+      recently_opened_only:
+        description: 'Only recently opened businesses (few/no reviews, never seen before). Replaces the min_reviews filter.'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-demo:
@@ -69,6 +74,7 @@ jobs:
           DEMO_REQUIRE_WEBSITE: ${{ inputs.require_website }}
           DEMO_REQUIRE_ECOMMERCE: ${{ inputs.require_ecommerce }}
           DEMO_REQUIRE_LOGO_LEAD: ${{ inputs.require_logo_lead }}
+          DEMO_RECENTLY_OPENED_ONLY: ${{ inputs.recently_opened_only }}
         run: python3 run_demo_search.py
 
       - name: Upload results
