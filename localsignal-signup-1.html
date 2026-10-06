@@ -511,6 +511,15 @@
               </span>
             </label>
           </div>
+          <div class="form-row" style="display:flex;align-items:center;gap:0.5rem">
+            <input id="recently-opened-only" type="checkbox" style="width:auto" />
+            <label for="recently-opened-only" style="margin:0">
+              Only recently opened businesses
+              <span style="display:block;font-size:0.8rem;color:var(--muted, #888);font-weight:400">
+                Flags brand-new listings (few or no reviews yet, never seen in a previous search) instead of the usual review-count filter above. Best for pitches that work well on businesses that just opened.
+              </span>
+            </label>
+          </div>
         </fieldset>
 
         <div id="status" class="status" style="display:none"></div>
@@ -685,6 +694,7 @@
         min_reviews: parseInt(document.getElementById('reviews')?.value, 10) || 40,
         require_website: !!document.getElementById('show-with-website')?.checked,
         require_ecommerce_platform: !!document.getElementById('require-ecommerce')?.checked,
+        recently_opened_only: !!document.getElementById('recently-opened-only')?.checked,
       };
 
       if (submitBtn) submitBtn.disabled = true;

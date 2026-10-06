@@ -124,6 +124,7 @@ exports.handler = async function (event) {
     min_reviews: parseInt(clientData.min_reviews, 10) || 40,
     require_website: !!clientData.require_website, // false = show only businesses without a proper website
     require_ecommerce_platform: !!clientData.require_ecommerce_platform, // true = only businesses with a detected online store
+    recently_opened_only: !!clientData.recently_opened_only, // true = swap the normal min_reviews search for the recently-opened scanner
     active: false, // stays off until Razorpay confirms payment (see razorpay-webhook.js)
   };
 
