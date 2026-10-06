@@ -382,6 +382,10 @@ def analyze_website(url):
     weak_points = []
     pagespeed_score = None
     ecommerce_platform = None
+    has_logo = None  # None = couldn't determine (fetch/parse failed) — kept
+                      # distinct from False (confirmed no logo found), since
+                      # a strict filter shouldn't treat "we don't know" the
+                      # same as "we checked and there's genuinely none".
 
     try:
         resp = requests.get(
@@ -425,6 +429,26 @@ def analyze_website(url):
                 with_alt = sum(1 for img in images if (img.get("alt") or "").strip())
                 if with_alt / len(images) < 0.5:
                     weak_points.append("Most images missing alt text (SEO/accessibility)")
+
+            # Logo/branding check: a custom favicon, an <img> with "logo" in
+            # its alt text or class, or an <svg>/element with "logo" in its
+            # class or id. Checking multiple patterns since sites vary
+            # between <img> logos and inline SVG logos.
+            # Note: BeautifulSoup calls these matcher lambdas once PER
+            # individual value in a multi-valued attribute (e.g. rel=
+            # ["icon"] calls the lambda with "icon" as a plain string each
+            # time), not once with the whole list — confirmed via testing.
+            favicon_tag = soup.find("link", rel=lambda r: r and "icon" in r.lower())
+            logo_img = soup.find("img", alt=lambda a: a and "logo" in a.lower())
+            if not logo_img:
+                logo_img = soup.find("img", class_=lambda c: c and "logo" in c.lower())
+            logo_by_id_or_class = soup.find(attrs={"id": lambda i: i and "logo" in i.lower()})
+            if not logo_by_id_or_class:
+                logo_by_id_or_class = soup.find(attrs={"class": lambda c: c and "logo" in c.lower()})
+
+            has_logo = bool(favicon_tag) or bool(logo_img) or bool(logo_by_id_or_class)
+            if not has_logo:
+                weak_points.append("No distinguishable logo/branding detected")
         except Exception as parse_err:
             print(f"  (HTML parsing skipped: {parse_err})")
 
@@ -461,6 +485,7 @@ def analyze_website(url):
         "weak_points": weak_points,
         "pagespeed_score": pagespeed_score,
         "ecommerce_platform": ecommerce_platform,
+        "has_logo": has_logo,
     }
 
 
@@ -747,29 +772,49 @@ def find_leads_for_client(client_id, client_settings):
 
             digital_status, pitch = check_digital_presence(place)
 
-            # ── Filter by the client's website preference (set at signup
-            # or changed later in client-config.html). require_ecommerce
-            # implies require_website — you can't have an online store
-            # without a real website, so checking "online store only"
-            # automatically restricts to "Has a website" leads too. ──
             require_website = client_settings.get("require_website", False)
             require_ecommerce = client_settings.get("require_ecommerce_platform", False)
-            effective_require_website = require_website or require_ecommerce
+            require_logo_lead = client_settings.get("require_logo_design_lead", False)
             no_website_statuses = ("No website", "Social media only")
-            if effective_require_website and digital_status != "Has a website":
-                continue
-            if not effective_require_website and digital_status not in no_website_statuses:
-                continue
+
+            recently_opened = detect_recently_opened(place)
+
+            if require_logo_lead:
+                # Strict logo-design-lead filter: either a recently-opened
+                # business with no website yet (building their brand from
+                # scratch), or an existing website with no distinguishable
+                # logo/branding detected. This legitimately wants a MIX of
+                # both website statuses, unlike the filters below, so it
+                # bypasses that logic entirely rather than combining with it.
+                if digital_status in no_website_statuses:
+                    if not recently_opened:
+                        continue
+                elif digital_status != "Has a website":
+                    continue
+                # "Has a website" leads fall through — the actual no-logo
+                # check happens after analyze_website runs, below.
+            else:
+                # ── Filter by the client's website preference (set at
+                # signup or changed later in client-config.html).
+                # require_ecommerce implies require_website — you can't
+                # have an online store without a real website. ──
+                effective_require_website = require_website or require_ecommerce
+                if effective_require_website and digital_status != "Has a website":
+                    continue
+                if not effective_require_website and digital_status not in no_website_statuses:
+                    continue
 
             website_url = place.get("websiteUri", "")
             weak_points_str = ""
             pagespeed_score = ""
             ecommerce_platform = None
+            has_logo = None
             if digital_status == "Has a website" and website_url:
                 analysis = analyze_website(website_url)
                 weak_points_str = "; ".join(analysis["weak_points"]) if analysis["weak_points"] else "No obvious gaps detected"
                 pagespeed_score = analysis["pagespeed_score"] if analysis["pagespeed_score"] is not None else ""
                 ecommerce_platform = analysis.get("ecommerce_platform")
+                has_logo = analysis.get("has_logo")
 
             # A client who specifically wants online-store businesses
             # skips this lead entirely if no known platform was detected
@@ -778,7 +823,12 @@ def find_leads_for_client(client_id, client_settings):
             if require_ecommerce and not ecommerce_platform:
                 continue
 
-            recently_opened = detect_recently_opened(place)
+            # Strict logo-lead check for the "Has a website" path: only
+            # keep it if no logo was POSITIVELY confirmed absent. has_logo
+            # is None when the fetch/parse failed (couldn't determine) —
+            # that's not treated as a match, a strict filter shouldn't guess.
+            if require_logo_lead and digital_status == "Has a website" and has_logo is not False:
+                continue
 
             all_leads.append({
                 "Search Query": query,
