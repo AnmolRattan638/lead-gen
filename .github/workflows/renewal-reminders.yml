@@ -17,6 +17,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install dependencies
+        run: pip install requests openpyxl beautifulsoup4
+
       - name: Send renewal reminders
         env:
           BREVO_USERNAME: ${{ secrets.BREVO_USERNAME }}

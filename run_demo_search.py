@@ -39,6 +39,7 @@ DEMO_LEAD_CAP = os.environ.get("DEMO_LEAD_CAP", "15")
 DEMO_MIN_REVIEWS = os.environ.get("DEMO_MIN_REVIEWS", "40")
 DEMO_REQUIRE_WEBSITE = os.environ.get("DEMO_REQUIRE_WEBSITE", "false").lower() == "true"
 DEMO_REQUIRE_ECOMMERCE = os.environ.get("DEMO_REQUIRE_ECOMMERCE", "false").lower() == "true"
+DEMO_REQUIRE_LOGO_LEAD = os.environ.get("DEMO_REQUIRE_LOGO_LEAD", "false").lower() == "true"
 
 DEMO_SETTINGS = {
     "cities": [c.strip() for c in DEMO_CITY.split(",") if c.strip()],
@@ -47,6 +48,7 @@ DEMO_SETTINGS = {
     "min_reviews": int(DEMO_MIN_REVIEWS),
     "require_website": DEMO_REQUIRE_WEBSITE,
     "require_ecommerce_platform": DEMO_REQUIRE_ECOMMERCE,
+    "require_logo_design_lead": DEMO_REQUIRE_LOGO_LEAD,
 }
 # ──────────────────────────────────────────
 

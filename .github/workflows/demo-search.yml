@@ -36,6 +36,11 @@ on:
         required: false
         type: boolean
         default: false
+      require_logo_lead:
+        description: 'Logo-design leads: recently opened businesses OR websites with no detectable logo/branding'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-demo:
@@ -63,6 +68,7 @@ jobs:
           DEMO_MIN_REVIEWS: ${{ inputs.min_reviews }}
           DEMO_REQUIRE_WEBSITE: ${{ inputs.require_website }}
           DEMO_REQUIRE_ECOMMERCE: ${{ inputs.require_ecommerce }}
+          DEMO_REQUIRE_LOGO_LEAD: ${{ inputs.require_logo_lead }}
         run: python3 run_demo_search.py
 
       - name: Upload results
