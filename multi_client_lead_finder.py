@@ -984,11 +984,17 @@ def find_recently_opened_leads_for_client(client_id, client_settings):
 
         print(f"[{client_id}] Searching (recently-opened): {query}")
         places = search_places(query, API_KEY)
+        stats = {"returned": len(places), "too_many_reviews": 0, "no_contact": 0,
+                 "already_seen": 0, "website_mismatch": 0, "no_ecommerce": 0, "kept": 0}
 
         for place in places:
             if len(all_leads) >= remaining_cap:
                 break
             if not passes_recently_opened_filter(place):
+                if place.get("userRatingCount", 0) > RECENTLY_OPENED_MAX_REVIEWS:
+                    stats["too_many_reviews"] += 1
+                else:
+                    stats["no_contact"] += 1
                 continue
 
             name = place.get("displayName", {}).get("text", "Unknown")
@@ -999,12 +1005,15 @@ def find_recently_opened_leads_for_client(client_id, client_settings):
             # this scan before, it's not a new listing — skip it, no
             # matter how few reviews it currently has.
             if key in seen or key in new_keys:
+                stats["already_seen"] += 1
                 continue
 
             digital_status, pitch = check_digital_presence(place)
             if effective_require_website and digital_status != "Has a website":
+                stats["website_mismatch"] += 1
                 continue
             if not effective_require_website and digital_status not in no_website_statuses:
+                stats["website_mismatch"] += 1
                 continue
 
             website_url = place.get("websiteUri", "")
@@ -1018,6 +1027,7 @@ def find_recently_opened_leads_for_client(client_id, client_settings):
                 ecommerce_platform = analysis.get("ecommerce_platform")
 
             if require_ecommerce and not ecommerce_platform:
+                stats["no_ecommerce"] += 1
                 continue
 
             review_count = place.get("userRatingCount", "")
@@ -1036,7 +1046,15 @@ def find_recently_opened_leads_for_client(client_id, client_settings):
                 "Weak Points": weak_points_str,
                 "PageSpeed Score (mobile)": pagespeed_score,
             })
+            stats["kept"] += 1
             new_keys.add(key)
+
+        print(f"[{client_id}]   -> Google returned {stats['returned']} | "
+              f"dropped: {stats['too_many_reviews']} too many reviews "
+              f"(>{RECENTLY_OPENED_MAX_REVIEWS}), {stats['no_contact']} no phone/website, "
+              f"{stats['already_seen']} already seen, "
+              f"{stats['website_mismatch']} website filter, "
+              f"{stats['no_ecommerce']} no e-commerce | kept {stats['kept']}")
 
     if new_keys:
         seen.update(new_keys)
