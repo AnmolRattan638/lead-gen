@@ -284,7 +284,7 @@ RECENTLY_OPENED_MAX_REVIEWS = 15   # ceiling to even be considered a candidate
 # up to this many result pages per query (20 places each, Google's max is 60),
 # and extra query wordings that tend to surface newly listed businesses.
 RECENTLY_OPENED_MAX_PAGES = 3
-RECENTLY_OPENED_QUERY_PREFIXES = ["", "new ", "grand opening "]
+RECENTLY_OPENED_QUERY_PREFIXES = ["", "new "]
 RECENTLY_OPENED_HIGH_CONFIDENCE_MAX = 5   # at/under this review count => "High"
 
 
