@@ -206,6 +206,41 @@ def search_places(query, api_key):
     return response.json().get("places", [])
 
 
+def search_places_wide(query, api_key, max_pages=None):
+    """Like search_places but follows Google's next-page token (up to
+    max_pages x 20 results). Used only by recently-opened mode."""
+    url = "https://places.googleapis.com/v1/places:searchText"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": (
+            "nextPageToken,"
+            "places.displayName,places.formattedAddress,"
+            "places.rating,places.userRatingCount,places.priceLevel,"
+            "places.websiteUri,places.nationalPhoneNumber,"
+            "places.types,places.photos,places.regularOpeningHours,"
+            "places.reviews"
+        )
+    }
+    max_pages = max_pages or RECENTLY_OPENED_MAX_PAGES
+    all_places = []
+    page_token = None
+    for _ in range(max_pages):
+        body = {"textQuery": query, "pageSize": 20}
+        if page_token:
+            body["pageToken"] = page_token
+        response = requests.post(url, headers=headers, json=body)
+        if response.status_code != 200:
+            print(f"ERROR searching '{query}': {response.text}")
+            break
+        data = response.json()
+        all_places.extend(data.get("places", []))
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            break
+    return all_places
+
+
 # ─── STEP 2: QUALITY FILTER (uses client's own min_reviews setting) ───
 def passes_size_filter(place, min_reviews):
     review_count = place.get("userRatingCount", 0)
@@ -245,6 +280,11 @@ def passes_size_filter(place, min_reviews):
 # to accumulate photos or a price-level signal yet, so requiring those
 # would filter out exactly the businesses this scanner exists to find.
 RECENTLY_OPENED_MAX_REVIEWS = 15   # ceiling to even be considered a candidate
+# Wider search for recently-opened mode only (normal mode is unchanged):
+# up to this many result pages per query (20 places each, Google's max is 60),
+# and extra query wordings that tend to surface newly listed businesses.
+RECENTLY_OPENED_MAX_PAGES = 3
+RECENTLY_OPENED_QUERY_PREFIXES = ["", "new ", "grand opening "]
 RECENTLY_OPENED_HIGH_CONFIDENCE_MAX = 5   # at/under this review count => "High"
 
 
@@ -955,7 +995,10 @@ def find_recently_opened_leads_for_client(client_id, client_settings):
           f"leads used today — {remaining_cap} remaining for this run.")
 
     search_queries = [
-        f"{category} in {city}" for city in cities for category in categories
+        f"{prefix}{category} in {city}"
+        for city in cities
+        for category in categories
+        for prefix in RECENTLY_OPENED_QUERY_PREFIXES
     ]
 
     # Dedicated seen-file — see get_client_new_business_seen_file() for why
@@ -983,7 +1026,7 @@ def find_recently_opened_leads_for_client(client_id, client_settings):
             break
 
         print(f"[{client_id}] Searching (recently-opened): {query}")
-        places = search_places(query, API_KEY)
+        places = search_places_wide(query, API_KEY)
         stats = {"returned": len(places), "too_many_reviews": 0, "no_contact": 0,
                  "already_seen": 0, "website_mismatch": 0, "no_ecommerce": 0, "kept": 0}
 
