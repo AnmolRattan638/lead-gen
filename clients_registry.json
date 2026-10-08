@@ -91,5 +91,29 @@
     "require_website": false,
     "require_ecommerce_platform": false,
     "active": true
+  },
+  "client_2351": {
+    "name": "Anmol Rattan",
+    "email": "anmolrattan852@gmail.com",
+    "cities": [
+      "Una",
+      "Berlin",
+      "Hoshiarpur"
+    ],
+    "categories": [
+      "coffee shops",
+      "restaurants",
+      "boutique hotels",
+      "fitness centers",
+      "pet grooming salons",
+      "real estate agencies",
+      "law firms"
+    ],
+    "daily_lead_cap": 20,
+    "min_reviews": 40,
+    "require_website": true,
+    "require_ecommerce_platform": false,
+    "recently_opened_only": false,
+    "active": false
   }
 }
